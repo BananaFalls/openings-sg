@@ -24,9 +24,11 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    # The crawl takes about 20 minutes and 2,500 vacancy lookups 45 or more
-    # (one request a second plus the round trip to Singapore), so allow slack.
-    timeout-minutes: 150
+    # Measured on the first run: the crawl takes about 35 minutes and vacancy
+    # lookups run at about 23 a minute (one request a second plus the round trip
+    # to Singapore). 500 lookups keeps a run near an hour, inside the 2,000
+    # free Actions minutes a month that a private repo gets.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -39,4 +41,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           PYTHONUNBUFFERED: "1"
-        run: python scraper/mcf_scraper.py --all --supabase --details 2500
+        run: python scraper/mcf_scraper.py --all --supabase --details 500
