@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: { default: `${SITE_NAME}: where Singapore is hiring, and what it pays`, template: `%s | ${SITE_NAME}` },
   description: DESCRIPTION,
   applicationName: SITE_NAME,
+  verification: { google: "-uWRpRknus7XMoLxBl0kxdw41vayW1xi2HK2FfedTMY" },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
