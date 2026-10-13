@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { DataFoot, Stamp, Unavailable, VacancyNote } from "@/components/Notes";
+import { DataFoot, Stamp, Unavailable } from "@/components/Notes";
 import { SectorsExplorer, type RoleRow } from "@/components/SectorsExplorer";
 import { getMeta, getRoles, getSectors, HOURLY, isEmpty, live, optional, prerenderMinPostings } from "@/lib/api";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Job openings and pay by sector in Singapore",
+  title: "Job postings and pay by sector in Singapore",
   description:
-    "Compare Singapore sectors by job openings, postings, companies hiring and advertised monthly pay, from MyCareersFuture. Search for a sector or a role.",
+    "Compare Singapore sectors by job postings, companies hiring and advertised monthly pay, from MyCareersFuture. Search for a sector or a role.",
   alternates: { canonical: "/sectors" },
 };
 
@@ -26,7 +26,6 @@ export default async function SectorsPage() {
     .map((r) => ({
       role: r.role,
       slug: r.slug,
-      openings: r.openings,
       postings: r.postings,
       median: r.pay?.median ?? null,
       sector: r.top_sector,
@@ -40,7 +39,7 @@ export default async function SectorsPage() {
           <div>
             <div className="eyebrow">Sectors</div>
             <h1 className="dd-title" id="secTitle">
-              Openings and pay by sector
+              Job postings and pay by sector
             </h1>
             <p className="hint">
               The bar shows the middle half of advertised pay (25th to 75th percentile); the tick is the median. Pick a
@@ -50,12 +49,7 @@ export default async function SectorsPage() {
           </div>
         </div>
         {ok ? (
-          <>
-            <div style={{ marginBottom: 14 }}>
-              <VacancyNote meta={meta} />
-            </div>
-            <SectorsExplorer sectors={sectors} roles={roleRows} roleMin={min} />
-          </>
+          <SectorsExplorer sectors={sectors} roles={roleRows} roleMin={min} />
         ) : (
           <Unavailable empty={!!meta && isEmpty(meta)} />
         )}

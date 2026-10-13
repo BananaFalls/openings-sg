@@ -10,7 +10,7 @@ export default function ErrorPage({ reset }: { error: Error & { digest?: string 
       <div className="unavailable glass" role="status">
         <h1>Live data isn&rsquo;t available right now</h1>
         <p>
-          We couldn&rsquo;t load the latest openings and pay figures for this page. Nothing is wrong on your side.
+          We couldn&rsquo;t load the latest postings and pay figures for this page. Nothing is wrong on your side.
           Please try again in a little while. We don&rsquo;t show estimates in their place.
         </p>
         <p>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fmtDate, int, money, MONTHS_LONG } from "@/lib/format";
 import { historySpan, trendView, type TrendView } from "@/lib/trends";
 import type { Meta, SectorSummary, Trends } from "@/lib/types";
-import { Stamp, Unavailable, VacancyNote } from "./Notes";
+import { Stamp, Unavailable } from "./Notes";
 import { SectorPicker } from "./SectorPicker";
 import { TrendChart } from "./TrendChart";
 
@@ -12,14 +12,14 @@ function Insights({ view }: { view: TrendView }) {
   const last = list[list.length - 1];
   const prev = list[list.length - 2];
   const p = peak >= 0 ? list[peak] : null;
-  const above = p && avg > 0 ? Math.round((p.openings / avg - 1) * 100) : null;
-  const chg = !last.partial && prev && prev.openings ? ((last.openings - prev.openings) / prev.openings) * 100 : null;
+  const above = p && avg > 0 ? Math.round((p.postings / avg - 1) * 100) : null;
+  const chg = !last.partial && prev && prev.postings ? ((last.postings - prev.postings) / prev.postings) * 100 : null;
 
   // "Best months" needs every calendar month at least once. With less, we say so instead of guessing.
   let best: number[] | null = null;
   if (mode === "month" && done.length >= 12) {
     const byMonth = new Map<number, number[]>();
-    for (const b of done) if (b.month != null) byMonth.set(b.month, [...(byMonth.get(b.month) ?? []), b.openings]);
+    for (const b of done) if (b.month != null) byMonth.set(b.month, [...(byMonth.get(b.month) ?? []), b.postings]);
     if (byMonth.size === 12) {
       best = [...byMonth.entries()]
         .map(([mo, a]) => [mo, a.reduce((s, v) => s + v, 0) / a.length] as const)
@@ -36,7 +36,7 @@ function Insights({ view }: { view: TrendView }) {
           <div className="label">Busiest {mode} so far</div>
           <div className="big">{p.long}</div>
           <div className="note">
-            {int(p.openings)} openings
+            {int(p.postings)} postings
             {done.length >= 3 && above != null && above > 0
               ? `, ${above}% above the ${mode}ly average`
               : `, out of the ${done.length} ${mode}${done.length === 1 ? "" : "s"} we have`}
@@ -46,7 +46,7 @@ function Insights({ view }: { view: TrendView }) {
       <div className="insight">
         <div className="label">Latest {mode}</div>
         <div className="big">
-          {int(last.openings)}{" "}
+          {int(last.postings)}{" "}
           {chg != null ? (
             <span className={`delta ${chg >= 0 ? "up" : "down"}`}>
               {chg >= 0 ? "▲" : "▼"} {Math.abs(chg).toFixed(0)}%
@@ -75,7 +75,7 @@ function Insights({ view }: { view: TrendView }) {
               ))}
             </div>
             <div className="note" style={{ marginTop: 6 }}>
-              Months with the most new openings.
+              Months with the most new postings.
             </div>
           </>
         ) : (
@@ -113,7 +113,7 @@ export function SeasonView({
         <div>
           <div className="eyebrow">Hiring season{current ? ` · ${current.sector}` : ""}</div>
           <h1 className="dd-title" id="seasonTitle">
-            {current ? `When ${current.sector} employers post the most openings` : "When employers post the most openings"}
+            {current ? `When ${current.sector} employers post the most jobs` : "When employers post the most jobs"}
           </h1>
           {ok ? <Stamp meta={meta} /> : null}
         </div>
@@ -145,7 +145,6 @@ export function SeasonView({
               list={view.list.map((b) => ({
                 label: b.label,
                 long: b.long,
-                openings: b.openings,
                 postings: b.postings,
                 partial: b.partial,
               }))}
@@ -164,20 +163,14 @@ export function SeasonView({
             make earlier {unit}s look quieter than they were.{" "}
             The chart shows what we have and grows every day.
           </p>
-          <div style={{ marginTop: 10 }}>
-            <VacancyNote meta={meta} />
-          </div>
           <details className="numbers">
             <summary>Show the numbers</summary>
             <div className="tbl-wrap">
               <table>
-                <caption className="vh">Openings and postings per {unit}</caption>
+                <caption className="vh">Postings per {unit}</caption>
                 <thead>
                   <tr>
                     <th scope="col">{unit === "week" ? "Week" : "Month"}</th>
-                    <th scope="col" className="num">
-                      Openings
-                    </th>
                     <th scope="col" className="num">
                       Postings
                     </th>
@@ -193,7 +186,6 @@ export function SeasonView({
                         {b.long}
                         {b.partial ? " (so far)" : ""}
                       </td>
-                      <td className="num">{int(b.openings)}</td>
                       <td className="num">{int(b.postings)}</td>
                       <td className="num">{money(b.medianPay)}</td>
                     </tr>

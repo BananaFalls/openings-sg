@@ -22,7 +22,7 @@ export const int = (n: number | null | undefined) => (isNum(n) ? group(n) : DASH
 
 export const plural = (n: number, one: string, many: string) => (Math.round(n) === 1 ? one : many);
 
-/** "5 openings", "1 opening". */
+/** "5 postings", "1 posting". */
 export const count = (n: number | null | undefined, one: string, many: string) =>
   isNum(n) ? `${int(n)} ${plural(n, one, many)}` : `${DASH} ${many}`;
 

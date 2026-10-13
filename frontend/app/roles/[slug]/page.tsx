@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RangeBar, ShareBars, SpanBar } from "@/components/Bars";
 import { More } from "@/components/More";
-import { DataFoot, Stamp, Unavailable, VacancyNote } from "@/components/Notes";
+import { DataFoot, Stamp, Unavailable } from "@/components/Notes";
 import { DAILY, getMeta, getRole, getRoles, isEmpty, live, looksLikeSlug, optional, prerenderMinPostings } from "@/lib/api";
 import { count, fmtDate, int, money, niceMax } from "@/lib/format";
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const updated = fmtDate(meta?.last_scrape);
   const title = `${r.role} salary in Singapore: advertised pay and who’s hiring`;
   const description =
-    `${r.role} jobs in Singapore: ${count(r.openings, "opening", "openings")} from ${count(r.companies, "company", "companies")} on MyCareersFuture.` +
+    `${r.role} jobs in Singapore: ${count(r.postings, "posting", "postings")} from ${count(r.companies, "company", "companies")} on MyCareersFuture.` +
     (pay?.median != null
       ? ` Median advertised pay ${money(pay.median)} a month` +
         (pay.p25 != null && pay.p75 != null ? ` (middle half ${money(pay.p25)} to ${money(pay.p75)}).` : ".")
@@ -65,7 +65,7 @@ export default async function RolePage({ params }: Props) {
   const vs = pay?.median != null && meta?.median_pay ? Math.round((pay.median / meta.median_pay - 1) * 100) : null;
   const companies = (Array.isArray(r.companies_hiring) ? r.companies_hiring : [])
     .slice()
-    .sort((a, b) => (b.pay_max ?? b.pay_min ?? -1) - (a.pay_max ?? a.pay_min ?? -1) || b.openings - a.openings);
+    .sort((a, b) => (b.pay_max ?? b.pay_min ?? -1) - (a.pay_max ?? a.pay_min ?? -1) || b.postings - a.postings);
   const coScale = niceMax(Math.max(0, ...companies.map((c) => c.pay_max ?? c.pay_min ?? 0)) * 1.05);
   const payScale = niceMax((pay?.p75 ?? 0) * 1.25);
   const sectors = Array.isArray(r.sectors) ? r.sectors : [];
@@ -89,8 +89,7 @@ export default async function RolePage({ params }: Props) {
             </div>
             {lo != null && hi != null ? <SpanBar lo={lo} hi={hi} scale={coScale} /> : null}
             <div className="oi-meta">
-              {count(c.openings, "opening", "openings")}
-              {c.postings > 1 ? ` in ${int(c.postings)} postings` : ""}
+              {count(c.postings, "posting", "postings")}
               {posted ? ` · posted ${posted}` : ""}
               {url ? (
                 <>
@@ -120,7 +119,7 @@ export default async function RolePage({ params }: Props) {
               {r.role}: pay and companies hiring in Singapore
             </h1>
             <p className="hint">
-              {count(r.openings, "opening", "openings")} across {count(r.postings, "posting", "postings")} from{" "}
+              {count(r.postings, "job posting", "job postings")} from{" "}
               {count(r.companies, "company", "companies")}
             </p>
             <div className="dd-chips">
@@ -158,12 +157,9 @@ export default async function RolePage({ params }: Props) {
             <div className="v">{int(pay?.n)}</div>
           </div>
           <div className="stat">
-            <div className="label">Openings</div>
-            <div className="v">{int(r.openings)}</div>
+            <div className="label">Job postings</div>
+            <div className="v">{int(r.postings)}</div>
           </div>
-        </div>
-        <div style={{ marginBottom: 18 }}>
-          <VacancyNote meta={meta} />
         </div>
 
         <div className="detail-grid">

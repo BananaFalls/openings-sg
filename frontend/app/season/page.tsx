@@ -7,9 +7,9 @@ import { getMeta, getSectors, getTrends, HOURLY, isEmpty, live } from "@/lib/api
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Hiring season in Singapore: when employers post the most openings",
+  title: "Hiring season in Singapore: when employers post the most jobs",
   description:
-    "See how many job openings Singapore employers post each week or month on MyCareersFuture, for all sectors or one, alongside official MOM unemployment and underemployment rates.",
+    "See how many jobs Singapore employers post each week or month on MyCareersFuture, for all sectors or one, alongside official MOM unemployment and underemployment rates.",
   alternates: { canonical: "/season" },
 };
 

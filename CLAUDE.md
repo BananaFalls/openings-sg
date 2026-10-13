@@ -20,12 +20,12 @@ A free web app that shows unemployed people in Singapore where the jobs are and 
 | Database | None |
 | Official stats | U-6 style chart uses figures hard-coded in `LABOUR` inside `index.html` |
 
-**New stack (built, not yet deployed):** the roadmap stack now exists alongside the MVP and has only been tested offline against fakes, never against a real Supabase project or on Vercel.
+**New stack (live since 2026-10-13):** site https://openings-sg.vercel.app, API https://openings-sg-api.vercel.app, repo github.com/BananaFalls/openings-sg (private). Pushing to `main` deploys both Vercel projects. Schema changes are not automatic: paste `db/schema.sql` into the Supabase SQL editor.
 
 | Part | What it is |
 |---|---|
-| Database | `db/schema.sql`: Supabase Postgres. `jobs` table plus ten `stats_*` materialised views; `refresh_stats()` rebuilds them. The public (anon) key can read the views only |
-| Scraper | `mcf_scraper.py --all --supabase --details N` upserts to `jobs` over Supabase's REST API (still standard library only) and fills vacancy counts from `GET /v2/jobs/{uuid}` |
+| Database | `db/schema.sql`: Supabase Postgres. `jobs` table plus ten `stats_*` materialised views; `refresh_stats()` rebuilds them. `history_sector` / `history_role` hold one row per day, written by `snapshot_stats()` and never pruned. The public (anon) key can read the views only |
+| Scraper | `mcf_scraper.py --all --supabase --prune-raw 30` upserts to `jobs` over Supabase's REST API (still standard library only), refreshes the stats, saves the day's history after a full clean crawl, and clears `raw` on jobs gone over 30 days |
 | Schedule | `.github/workflows/scrape.yml`: daily at 03:17 SGT. Secrets `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` |
 | Back end | `backend/main.py`: FastAPI on Vercel (root directory `backend`), reads the `stats_*` views. Env `SUPABASE_URL`, `SUPABASE_ANON_KEY`. See `backend/README.md` |
 | Front end | `frontend/`: Next.js on Vercel (root directory `frontend`), hand-drawn SVG charts, no sample data. Env `API_URL`, `NEXT_PUBLIC_SITE_URL` |
@@ -103,7 +103,7 @@ Record shape (scraper output and internal):
 Rules the numbers follow:
 - Salaries are **monthly SGD**. Annual is divided by 12; hourly/daily is dropped.
 - A posting's pay = **midpoint** of its advertised range. Stats use midpoints.
-- **Openings = vacancies**, so one posting can count several times. **Postings = listings**.
+- **The live site counts postings (listings), not vacancies.** MCF's search results carry no vacancy count, so "openings" was dropped as a metric on 2026-10-13; label figures "postings" or "job postings". The old `web/index.html` still uses openings = vacancies. "Openings" stays in the site name and in ordinary copy.
 - Sector = the first MCF category on the job.
 - `first_seen` / `last_seen` let you compute days listed once the scraper runs daily.
 
@@ -126,7 +126,7 @@ Rules the numbers follow:
 
 - Uses MCF's public search API (`POST /v2/search`), falling back to `GET /v2/jobs`. Verified against the live API on 2026-10-13: all 43 categories valid, about 70k live jobs, about 724 requests per `--all` run.
 - MCF limits: `limit` max 100, and only the first 10,000 results of any query are reachable. `--all` crawls category by category to stay under that; the largest category was 7,455. The run exits 1 if a category is empty or stops early.
-- Search results carry **no vacancy count**; only `GET /v2/jobs/{uuid}` does. In the database `vacancies` is NULL until `--details` fetches it, such postings count as one opening, and `stats_meta.vacancy_coverage` says how many are known. JSON-file mode still writes 1.
+- Search results carry **no vacancy count**; only `GET /v2/jobs/{uuid}` does (about 23 lookups a minute from GitHub's runners). The `--details` flag, the `vacancies` column and `set_vacancies()` still exist but nothing uses them. JSON-file mode still writes 1.
 - `posted_date` is MCF's `newPostingDate`, which can be a repost date.
 - Pay under S$300 a month (about 2% of postings, e.g. 1-1) is treated as missing in the database's pay stats.
 - Keep `--delay` ≥ 1s. Check MCF's terms of use before scaling up.
@@ -136,9 +136,9 @@ Rules the numbers follow:
 - [ ] Fill `SUPPORT` (Buy Me a Coffee username, PayNow number/UEN, business email).
 - [ ] Personalise the About story with the founder's real experience.
 - [x] Verify the scraper against the live MCF API.
-- [ ] Deploy the new stack: run `db/schema.sql` in Supabase, set the GitHub secrets, deploy `backend/` then `frontend/` to Vercel.
-- [ ] Decide a retention plan for the 500 MB Supabase free tier (roughly 3 months at current volume; `--prune-raw 30` extends it).
-- [ ] Check MCF's terms of use for the daily crawl and the `--details` lookups.
+- [ ] Watch the 500 MB Supabase free tier (roughly 5 to 6 months with `--prune-raw 30`); old `jobs` rows can go once the history tables carry the trends.
+- [ ] Show the daily history on the site (week-on-week change, new postings) once a few weeks have built up.
+- [ ] Check MCF's terms of use for the daily crawl.
 - [ ] Founder to review the About copy changed in `frontend/app/about`.
 - [ ] Add 2026 time-related underemployment to `LABOUR` when MOM publishes it (usually late November).
 - [ ] Optionally add discouraged workers to the U-6 measure if a consistent MOM series is found.

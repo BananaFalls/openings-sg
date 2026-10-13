@@ -143,9 +143,9 @@ Db = Annotated[Supabase, Depends(supabase)]
 # ------------------------------------------------------------------- shapes
 
 PAY_COLS = "pay_p25,pay_median,pay_p75,pay_mean,pay_n"
-SECTOR_COLS = f"sector,sector_slug,postings,openings,companies,{PAY_COLS}"
-ROLE_COLS = f"role_slug,role,postings,openings,companies,top_sector,top_sector_slug,{PAY_COLS}"
-SECTOR_ROLE_COLS = f"role_slug,role,postings,openings,{PAY_COLS}"
+SECTOR_COLS = f"sector,sector_slug,postings,companies,{PAY_COLS}"
+ROLE_COLS = f"role_slug,role,postings,companies,top_sector,top_sector_slug,{PAY_COLS}"
+SECTOR_ROLE_COLS = f"role_slug,role,postings,{PAY_COLS}"
 
 
 def pay(r: Row) -> dict[str, Any]:
@@ -163,7 +163,6 @@ def sector_summary(r: Row) -> dict[str, Any]:
         "sector": r.get("sector"),
         "slug": r.get("sector_slug"),
         "postings": r.get("postings"),
-        "openings": r.get("openings"),
         "companies": r.get("companies"),
         "pay": pay(r),
     }
@@ -174,7 +173,6 @@ def role_summary(r: Row) -> dict[str, Any]:
         "role": r.get("role"),
         "slug": r.get("role_slug"),
         "postings": r.get("postings"),
-        "openings": r.get("openings"),
         "companies": r.get("companies"),
         "top_sector": r.get("top_sector"),
         "top_sector_slug": r.get("top_sector_slug"),
@@ -212,7 +210,7 @@ def ilike_contains(q: str) -> str:
 
 app = FastAPI(
     title="Openings SG API",
-    description="Pre-aggregated job openings and advertised pay in Singapore. "
+    description="Pre-aggregated job postings and advertised pay in Singapore. "
     "Pay is monthly SGD, taken from advertised ranges.",
     version="1.0.0",
 )
@@ -245,8 +243,7 @@ async def healthz() -> dict[str, bool]:
 async def meta(db: Db) -> dict[str, Any]:
     rows, _ = await db.select(
         "stats_meta",
-        "last_scrape,first_scrape,postings,openings,companies,pay_median,"
-        "vacancy_coverage,pay_coverage",
+        "last_scrape,first_scrape,postings,companies,pay_median,pay_coverage",
         order="last_scrape.desc.nullslast",
         limit=1,
     )
@@ -255,10 +252,8 @@ async def meta(db: Db) -> dict[str, Any]:
             "last_scrape": None,
             "first_scrape": None,
             "postings": 0,
-            "openings": 0,
             "companies": 0,
             "median_pay": None,
-            "vacancy_coverage": None,
             "pay_coverage": None,
         }
     r = rows[0]
@@ -266,10 +261,8 @@ async def meta(db: Db) -> dict[str, Any]:
         "last_scrape": r.get("last_scrape"),
         "first_scrape": r.get("first_scrape"),
         "postings": r.get("postings"),
-        "openings": r.get("openings"),
         "companies": r.get("companies"),
         "median_pay": r.get("pay_median"),
-        "vacancy_coverage": r.get("vacancy_coverage"),
         "pay_coverage": r.get("pay_coverage"),
     }
 
@@ -279,7 +272,7 @@ async def sectors(db: Db) -> dict[str, Any]:
     rows, _ = await db.select(
         "stats_sector",
         SECTOR_COLS,
-        order="openings.desc.nullslast,postings.desc.nullslast,sector_slug.asc",
+        order="postings.desc.nullslast,sector_slug.asc",
     )
     return {"sectors": [sector_summary(r) for r in rows]}
 
@@ -306,7 +299,7 @@ async def sector_detail(slug: str, db: Db) -> dict[str, Any]:
             "stats_sector_role",
             SECTOR_ROLE_COLS,
             eq,
-            order="openings.desc.nullslast,postings.desc.nullslast,role_slug.asc",
+            order="postings.desc.nullslast,role_slug.asc",
             limit=200,
         ),
     )
@@ -348,7 +341,7 @@ async def roles(
     needle = " ".join("".join(c for c in q if c.isprintable() or c.isspace()).split())
     if needle:
         filters["role"] = ilike_contains(needle)
-    order = "openings.desc.nullslast,postings.desc.nullslast,role_slug.asc"
+    order = "postings.desc.nullslast,role_slug.asc"
 
     rows, total = await db.select(
         "stats_role", ROLE_COLS, filters, order=order, offset=offset, limit=limit
@@ -381,9 +374,9 @@ async def role_detail(slug: str, db: Db) -> dict[str, Any]:
         ),
         db.select(
             "stats_role_company",
-            "company,postings,openings,pay_min,pay_max,latest_posted,url",
+            "company,postings,pay_min,pay_max,latest_posted,url",
             eq,
-            order="openings.desc.nullslast,postings.desc.nullslast,company.asc,url.asc",
+            order="postings.desc.nullslast,company.asc,url.asc",
             limit=50,
         ),
     )
@@ -401,7 +394,6 @@ async def role_detail(slug: str, db: Db) -> dict[str, Any]:
             {
                 "company": c.get("company"),
                 "postings": c.get("postings"),
-                "openings": c.get("openings"),
                 "pay_min": c.get("pay_min"),
                 "pay_max": c.get("pay_max"),
                 "latest_posted": c.get("latest_posted"),
@@ -420,7 +412,7 @@ async def trends(
     slug = check_slug(sector, "Sector") if sector else "all"
     rows, _ = await db.select(
         "stats_trend",
-        "granularity,period,postings,openings,pay_median",
+        "granularity,period,postings,pay_median",
         {"sector_slug": f"eq.{slug}"},
         order="granularity.asc,period.asc",
     )
@@ -443,7 +435,6 @@ async def trends(
             {
                 "period": r.get("period"),
                 "postings": r.get("postings"),
-                "openings": r.get("openings"),
                 "median_pay": r.get("pay_median"),
             }
             for r in by_gran[granularity]

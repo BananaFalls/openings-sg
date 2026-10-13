@@ -435,6 +435,15 @@ def run_supabase(args, targets):
         print("Stats refreshed")
     except SupabaseError as e:
         problems.append(f"Stats refresh failed, the site still shows the old numbers: {e}")
+    # One row per sector and popular role for today, kept for good. Only after a
+    # full, clean crawl: a partial day would sit in the history as a false dip.
+    if args.all and not (empty or incomplete or problems):
+        try:
+            print(f'History saved for {db.rpc("snapshot_stats", timeout=300)}')
+        except SupabaseError as e:
+            problems.append(f"History snapshot failed, today is missing from the history: {e}")
+    elif args.all:
+        print("History not saved for today: the crawl was not complete")
     try:
         print(f'{db.count("jobs", f"last_seen=eq.{today}")} jobs live today, '
               f'{db.count("jobs", f"first_seen=eq.{today}")} new')

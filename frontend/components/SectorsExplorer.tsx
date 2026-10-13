@@ -9,19 +9,17 @@ import { RangeBar } from "./Bars";
 export type RoleRow = {
   role: string;
   slug: string;
-  openings: number;
   postings: number;
   median: number | null;
   sector: string | null;
   sectorSlug: string | null;
 };
 
-type SortKey = "sector" | "openings" | "postings" | "companies" | "median";
+type SortKey = "sector" | "postings" | "companies" | "median";
 type Sort = { key: SortKey; dir: "asc" | "desc" };
 
 const COLS: { key: SortKey; label: string; num: boolean }[] = [
   { key: "sector", label: "Sector", num: false },
-  { key: "openings", label: "Openings", num: true },
   { key: "postings", label: "Postings", num: true },
   { key: "companies", label: "Companies", num: true },
   { key: "median", label: "Median pay", num: true },
@@ -41,7 +39,7 @@ export function SectorsExplorer({
   roleMin: number;
 }) {
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<Sort>({ key: "openings", dir: "desc" });
+  const [sort, setSort] = useState<Sort>({ key: "postings", dir: "desc" });
   const [allRoles, setAllRoles] = useState(false);
   const q = query.trim().toLowerCase();
 
@@ -92,7 +90,7 @@ export function SectorsExplorer({
       {rows.length ? (
         <div className="tbl-wrap">
           <table>
-            <caption className="vh">Openings and advertised pay by sector. Column headers sort the table.</caption>
+            <caption className="vh">Postings and advertised pay by sector. Column headers sort the table.</caption>
             <thead>
               <tr>
                 {COLS.map((c) => (
@@ -122,7 +120,6 @@ export function SectorsExplorer({
                       <Link href={`/sectors/${s.slug}`}>{s.sector}</Link>
                       {match ? <span className="sub">Matches · {match.role}</span> : null}
                     </td>
-                    <td className="num">{int(s.openings)}</td>
                     <td className="num">{int(s.postings)}</td>
                     <td className="num">{int(s.companies)}</td>
                     <td className="num">{money(s.pay?.median)}</td>
@@ -148,13 +145,10 @@ export function SectorsExplorer({
         {shownRoles.length ? (
           <div className="tbl-wrap">
             <table>
-              <caption className="vh">Roles, with openings and median advertised pay</caption>
+              <caption className="vh">Roles, with postings and median advertised pay</caption>
               <thead>
                 <tr>
                   <th scope="col">Role</th>
-                  <th scope="col" className="num">
-                    Openings
-                  </th>
                   <th scope="col" className="num">
                     Postings
                   </th>
@@ -170,7 +164,6 @@ export function SectorsExplorer({
                       <Link href={`/roles/${r.slug}`}>{r.role}</Link>
                       {r.sector ? <span className="sub">Mostly in {r.sector}</span> : null}
                     </td>
-                    <td className="num">{int(r.openings)}</td>
                     <td className="num">{int(r.postings)}</td>
                     <td className="num">{money(r.median)}</td>
                   </tr>

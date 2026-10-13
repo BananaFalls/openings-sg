@@ -1,7 +1,7 @@
 name: Daily scrape
 
-# Crawls every live MyCareersFuture job into Supabase, looks up vacancy counts for
-# the newest jobs that lack them, then refreshes the stats views.
+# Crawls every live MyCareersFuture job into Supabase, refreshes the stats views,
+# saves the day's history snapshot and clears bulky raw data on long-gone jobs.
 #
 # Needs two repository secrets (Settings > Secrets and variables > Actions):
 #   SUPABASE_URL          e.g. https://abcdefgh.supabase.co
@@ -24,21 +24,20 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    # Measured on the first run: the crawl takes about 35 minutes and vacancy
-    # lookups run at about 23 a minute (one request a second plus the round trip
-    # to Singapore). 500 lookups keeps a run near an hour, inside the 2,000
-    # free Actions minutes a month that a private repo gets.
-    timeout-minutes: 120
+    # Measured on the first run: the crawl takes about 35 minutes, so a month of
+    # runs fits inside the 2,000 free Actions minutes a private repo gets.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       # Exits 1 if a category came back empty or stopped early, so the run shows
-      # as failed. What it did fetch is saved and the stats are refreshed first.
+      # as failed. What it did fetch is saved and the stats are refreshed first,
+      # but that day is left out of the history.
       - name: Scrape MyCareersFuture into Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           PYTHONUNBUFFERED: "1"
-        run: python scraper/mcf_scraper.py --all --supabase --details 500
+        run: python scraper/mcf_scraper.py --all --supabase --prune-raw 30

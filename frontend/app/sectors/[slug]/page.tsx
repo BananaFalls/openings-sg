@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { RangeBar, ShareBars } from "@/components/Bars";
 import { Histogram } from "@/components/Charts";
 import { More } from "@/components/More";
-import { DataFoot, Stamp, Unavailable, VacancyNote } from "@/components/Notes";
+import { DataFoot, Stamp, Unavailable } from "@/components/Notes";
 import { SectorPicker } from "@/components/SectorPicker";
 import { DAILY, getMeta, getSector, getSectors, getTrends, isEmpty, live, looksLikeSlug, optional } from "@/lib/api";
 import { count, fmtDate, int, money, niceMax } from "@/lib/format";
@@ -28,12 +28,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [s, meta] = looksLikeSlug(slug)
     ? await Promise.all([getSector(slug, DAILY).then(optional), getMeta(DAILY).then(optional)])
     : [null, null];
-  if (!s) return { title: "Sector pay and openings in Singapore", alternates: { canonical } };
+  if (!s) return { title: "Sector pay and job postings in Singapore", alternates: { canonical } };
   const pay = s.pay;
   const updated = fmtDate(meta?.last_scrape);
   const title = `${s.sector} jobs and pay in Singapore`;
   const description =
-    `${count(s.openings, "opening", "openings")} in ${s.sector} from ${count(s.companies, "company", "companies")} on MyCareersFuture.` +
+    `${count(s.postings, "job posting", "job postings")} in ${s.sector} from ${count(s.companies, "company", "companies")} on MyCareersFuture.` +
     (pay?.median != null
       ? ` Median advertised pay ${money(pay.median)} a month` +
         (pay.p25 != null && pay.p75 != null ? ` (middle half ${money(pay.p25)} to ${money(pay.p75)}).` : ".")
@@ -71,10 +71,10 @@ export default async function SectorPage({ params }: Props) {
   }
 
   const pay = s.pay;
-  const roles = Array.isArray(s.roles) ? s.roles.slice().sort((a, b) => b.openings - a.openings) : [];
+  const roles = Array.isArray(s.roles) ? s.roles.slice().sort((a, b) => b.postings - a.postings) : [];
   const scale = niceMax(Math.max(0, ...roles.map((r) => r.pay?.p75 ?? 0)) * 1.05);
-  const byOpenings = sectors.slice().sort((a, b) => b.openings - a.openings);
-  const rank = byOpenings.findIndex((x) => x.slug === s.slug) + 1;
+  const byPostings = sectors.slice().sort((a, b) => b.postings - a.postings);
+  const rank = byPostings.findIndex((x) => x.slug === s.slug) + 1;
   const vs =
     pay?.median != null && meta?.median_pay ? Math.round((pay.median / meta.median_pay - 1) * 100) : null;
   const view = trendView(trends, meta?.first_scrape, meta?.last_scrape);
@@ -84,13 +84,10 @@ export default async function SectorPage({ params }: Props) {
   const rolesTable = (
     <div className="tbl-wrap">
       <table>
-        <caption className="vh">Roles in {s.sector}, with openings and advertised pay</caption>
+        <caption className="vh">Roles in {s.sector}, with postings and advertised pay</caption>
         <thead>
           <tr>
             <th scope="col">Role</th>
-            <th scope="col" className="num">
-              Openings
-            </th>
             <th scope="col" className="num">
               Postings
             </th>
@@ -106,7 +103,6 @@ export default async function SectorPage({ params }: Props) {
               <td className="role">
                 <Link href={`/roles/${r.slug}`}>{r.role}</Link>
               </td>
-              <td className="num">{int(r.openings)}</td>
               <td className="num">{int(r.postings)}</td>
               <td className="num">{money(r.pay?.median)}</td>
               <td className="rng">
@@ -129,17 +125,17 @@ export default async function SectorPage({ params }: Props) {
           <div>
             <div className="eyebrow">Sector deep-dive</div>
             <h1 className="dd-title" id="sectorTitle">
-              {s.sector}: openings and pay in Singapore
+              {s.sector}: jobs and pay in Singapore
             </h1>
             <p className="hint">
-              {count(s.openings, "opening", "openings")} across {count(s.postings, "posting", "postings")} from{" "}
+              {count(s.postings, "job posting", "job postings")} from{" "}
               {count(s.companies, "company", "companies")}
               {busiest ? ` · busiest so far: ${busiest.long}` : ""}
             </p>
             <div className="dd-chips">
               {rank > 0 ? (
                 <span className="chip">
-                  #{rank} of {sectors.length} for openings
+                  #{rank} of {sectors.length} for postings
                 </span>
               ) : null}
               {vs != null ? (
@@ -191,9 +187,6 @@ export default async function SectorPage({ params }: Props) {
             <div className="label">Companies hiring</div>
             <div className="v">{int(s.companies)}</div>
           </div>
-        </div>
-        <div style={{ marginBottom: 18 }}>
-          <VacancyNote meta={meta} />
         </div>
 
         <div className="detail-grid">

@@ -12,10 +12,8 @@ export type Meta = {
   last_scrape: string | null;
   first_scrape: string | null;
   postings: number | null;
-  openings: number | null;
   companies: number | null;
   median_pay: number | null;
-  vacancy_coverage: number | null;
   pay_coverage: number | null;
 };
 
@@ -23,7 +21,6 @@ export type SectorSummary = {
   sector: string;
   slug: string;
   postings: number;
-  openings: number;
   companies: number;
   pay: Pay | null;
 };
@@ -35,7 +32,6 @@ export type RoleSummary = {
   role: string;
   slug: string;
   postings: number;
-  openings: number;
   companies: number;
   top_sector: string | null;
   top_sector_slug: string | null;
@@ -52,7 +48,6 @@ export type SectorDetail = SectorSummary & {
 export type CompanyHiring = {
   company: string;
   postings: number;
-  openings: number;
   pay_min: number | null;
   pay_max: number | null;
   latest_posted: string | null;
@@ -69,7 +64,6 @@ export type RoleDetail = RoleSummary & {
 export type TrendPoint = {
   period: string;
   postings: number;
-  openings: number;
   median_pay: number | null;
 };
 

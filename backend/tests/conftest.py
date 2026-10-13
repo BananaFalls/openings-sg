@@ -143,10 +143,8 @@ def seed(db: FakePostgrest) -> None:
             "last_scrape": "2026-10-13",
             "first_scrape": "2026-09-15",
             "postings": 61234,
-            "openings": 148902,
             "companies": 14876,
             "pay_median": 4250.0,
-            "vacancy_coverage": 0.9731,
             "pay_coverage": 0.8842,
         }
     ]
@@ -155,7 +153,6 @@ def seed(db: FakePostgrest) -> None:
             "sector": "Information Technology",
             "sector_slug": "information-technology",
             "postings": 8120,
-            "openings": 15310,
             "companies": 2104,
             **pay_cols(5500.0, 7250.0, 9500.0, 7684.52, 7402),
         },
@@ -163,7 +160,6 @@ def seed(db: FakePostgrest) -> None:
             "sector": "F&B",
             "sector_slug": "f-b",
             "postings": 6900,
-            "openings": 23870,
             "companies": 1730,
             **pay_cols(2200.0, 2700.0, 3300.0, 2861.4, 6511),
         },
@@ -172,7 +168,6 @@ def seed(db: FakePostgrest) -> None:
             "sector": "Precision Engineering",
             "sector_slug": "precision-engineering",
             "postings": 12,
-            "openings": 31,
             "companies": 7,
             **PAY_NULL,
         },
@@ -196,7 +191,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "data-analyst",
             "role": "Data Analyst",
             "postings": 310,
-            "openings": 402,
             **pay_cols(4500.0, 5500.0, 6800.0, 5712.9, 288),
         },
         {
@@ -204,7 +198,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "software-engineer",
             "role": "Software Engineer",
             "postings": 940,
-            "openings": 1875,
             **pay_cols(6000.0, 7500.0, 9500.0, 7833.33, 871),
         },
         {
@@ -212,7 +205,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "it-intern",
             "role": "IT Intern",
             "postings": 6,
-            "openings": 9,
             **PAY_NULL,
         },
         {
@@ -220,7 +212,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "service-crew",
             "role": "Service Crew",
             "postings": 1250,
-            "openings": 6120,
             **pay_cols(2000.0, 2300.0, 2600.0, 2318.75, 1190),
         },
     ]
@@ -229,7 +220,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "software-engineer",
             "role": "Software Engineer",
             "postings": 1010,
-            "openings": 1990,
             "companies": 512,
             "top_sector": "Information Technology",
             "top_sector_slug": "information-technology",
@@ -239,7 +229,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "service-crew",
             "role": "Service Crew",
             "postings": 1300,
-            "openings": 6300,
             "companies": 640,
             "top_sector": "F&B",
             "top_sector_slug": "f-b",
@@ -249,7 +238,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "data-analyst",
             "role": "Data Analyst",
             "postings": 388,
-            "openings": 497,
             "companies": 251,
             "top_sector": "Information Technology",
             "top_sector_slug": "information-technology",
@@ -259,7 +247,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "c-developer-100-remote",
             "role": "C++ Developer (100% Remote_OK)",
             "postings": 7,
-            "openings": 7,
             "companies": 3,
             "top_sector": "Information Technology",
             "top_sector_slug": "information-technology",
@@ -269,7 +256,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "it-intern",
             "role": "IT Intern",
             "postings": 6,
-            "openings": 9,
             "companies": 5,
             "top_sector": "Information Technology",
             "top_sector_slug": "information-technology",
@@ -279,7 +265,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "glass-blower",
             "role": "Glass Blower",
             "postings": 2,
-            "openings": 2,
             "companies": 1,
             "top_sector": "Precision Engineering",
             "top_sector_slug": "precision-engineering",
@@ -302,7 +287,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "data-analyst",
             "company": "Example Analytics Pte Ltd",
             "postings": 3,
-            "openings": 6,
             "pay_min": 5000,
             "pay_max": 7000,
             "latest_posted": "2026-10-09",
@@ -312,7 +296,6 @@ def seed(db: FakePostgrest) -> None:
             "role_slug": "data-analyst",
             "company": "Sample Logistics Pte Ltd",
             "postings": 1,
-            "openings": 12,
             "pay_min": None,
             "pay_max": None,
             "latest_posted": "2026-09-30",
@@ -323,22 +306,22 @@ def seed(db: FakePostgrest) -> None:
     t["stats_trend"] = (
         [
             {"sector_slug": "all", "granularity": "week", "period": p, "postings": 9000 + i * 500,
-             "openings": 21000 + i * 900, "pay_median": 4200.0 + i * 10}
+             "pay_median": 4200.0 + i * 10}
             for i, p in enumerate(reversed(weeks))
         ]
         + [
             {"sector_slug": "all", "granularity": "month", "period": "2026-09-01", "postings": 30100,
-             "openings": 71000, "pay_median": 4200.0},
+             "pay_median": 4200.0},
             {"sector_slug": "all", "granularity": "month", "period": "2026-10-01", "postings": 31134,
-             "openings": 77902, "pay_median": 4300.0},
+             "pay_median": 4300.0},
         ]
         + [
             {"sector_slug": "information-technology", "granularity": "week", "period": weeks[0],
-             "postings": 1500, "openings": 2900, "pay_median": 7200.0},
+             "postings": 1500, "pay_median": 7200.0},
             {"sector_slug": "information-technology", "granularity": "week", "period": weeks[1],
-             "postings": 3, "openings": 3, "pay_median": None},
+             "postings": 3, "pay_median": None},
             {"sector_slug": "information-technology", "granularity": "month", "period": "2026-09-01",
-             "postings": 1503, "openings": 2903, "pay_median": 7200.0},
+             "postings": 1503, "pay_median": 7200.0},
         ]
     )
 

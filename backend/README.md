@@ -14,9 +14,9 @@ All `GET`, all JSON. Pay is monthly SGD from advertised ranges.
 |---|---|
 | `/healthz` | `{ok: true}` (does not call Supabase) |
 | `/v1/meta` | totals, scrape dates, coverage |
-| `/v1/sectors` | every sector, most openings first |
+| `/v1/sectors` | every sector, most postings first |
 | `/v1/sectors/{slug}` | one sector with employment types, seniority, pay histogram, top 200 roles |
-| `/v1/roles?min_postings=5&limit=100&offset=0&q=` | roles, most openings first; `q` is a case-insensitive substring of the role name; `limit` max 1000 |
+| `/v1/roles?min_postings=5&limit=100&offset=0&q=` | roles, most postings first; `q` is a case-insensitive substring of the role name; `limit` max 1000 |
 | `/v1/roles/{slug}` | one role with sectors, employment types, seniority, top 50 companies hiring |
 | `/v1/trends?sector={slug}` | weekly points when the data spans under 90 days, else monthly; no `sector` means all sectors |
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Sparkline } from "@/components/Charts";
 import { HashRedirect } from "@/components/HashRedirect";
 import { LabourPanel } from "@/components/LabourPanel";
-import { DataFoot, Stamp, Unavailable, VacancyNote } from "@/components/Notes";
+import { DataFoot, Stamp, Unavailable } from "@/components/Notes";
 import { getMeta, getSectors, getTrends, HOURLY, isEmpty, live } from "@/lib/api";
 import { fmtDate, int, kfmt, money } from "@/lib/format";
 import { TAGLINE } from "@/lib/site";
@@ -20,7 +20,7 @@ export default async function OverviewPage() {
   const trends = live(trendsR);
   const ok = !isEmpty(meta) && !!sectors && sectors.length > 0;
 
-  const top = ok ? sectors.slice().sort((a, b) => b.openings - a.openings) : [];
+  const top = ok ? sectors.slice().sort((a, b) => b.postings - a.postings) : [];
   const view = trendView(ok ? trends : null, meta?.first_scrape, meta?.last_scrape);
   const done = view.list.filter((b) => !b.partial);
   const peak = view.peak >= 0 ? view.list[view.peak] : null;
@@ -36,7 +36,7 @@ export default async function OverviewPage() {
           <p className="tagline">{TAGLINE}</p>
           <h1>Find where Singapore is hiring, and what it pays.</h1>
           <p className="lede">
-            Openings and advertised monthly salaries by sector and role from MyCareersFuture, plus when employers post
+            Job postings and advertised monthly salaries by sector and role from MyCareersFuture, plus when employers post
             the most jobs.
           </p>
           <Stamp meta={ok ? meta : null} />
@@ -45,17 +45,14 @@ export default async function OverviewPage() {
           <div className="hero-data">
             <div className="kpis">
               <div className="kpi glass">
-                <span className="label">Open positions</span>
-                <span className="val">{int(meta.openings)}</span>
-                <span className="sub">vacancies across all postings</span>
-              </div>
-              <div className="kpi glass">
                 <span className="label">Job postings</span>
                 <span className="val">{int(meta.postings)}</span>
-                <span className="sub">
-                  {meta.companies ? `${int(meta.companies)} companies · ` : ""}
-                  {sectors.length} sectors
-                </span>
+                <span className="sub">live on MyCareersFuture · {sectors.length} sectors</span>
+              </div>
+              <div className="kpi glass">
+                <span className="label">Companies hiring</span>
+                <span className="val">{int(meta.companies)}</span>
+                <span className="sub">with at least one live posting</span>
               </div>
               <div className="kpi glass">
                 <span className="label">Median monthly pay</span>
@@ -65,14 +62,13 @@ export default async function OverviewPage() {
                 </span>
               </div>
               <div className="kpi glass small">
-                <span className="label">Most openings</span>
+                <span className="label">Most postings</span>
                 <span className="val">
                   <Link href={`/sectors/${top[0].slug}`}>{top[0].sector}</Link>
                 </span>
-                <span className="sub">{int(top[0].openings)} openings</span>
+                <span className="sub">{int(top[0].postings)} postings</span>
               </div>
             </div>
-            <VacancyNote meta={meta} />
           </div>
         ) : (
           <Unavailable empty={!!meta && isEmpty(meta)} />
@@ -86,10 +82,10 @@ export default async function OverviewPage() {
             <>
               <span className="t-big">{peak.long}</span>
               <span className="t-note">
-                Busiest {view.mode} for new openings so far
+                Busiest {view.mode} for new postings so far
                 {span ? `, from ${span} of data` : ""}.
               </span>
-              <Sparkline values={view.list.map((b) => b.openings)} peak={view.peak} />
+              <Sparkline values={view.list.map((b) => b.postings)} peak={view.peak} />
             </>
           ) : ok ? (
             <>
@@ -114,15 +110,15 @@ export default async function OverviewPage() {
             <div className="t-list">
               <div className="t-head" aria-hidden="true">
                 <span>Sector</span>
-                <span>Openings</span>
+                <span>Postings</span>
                 <span>Median pay</span>
               </div>
               {top.slice(0, 5).map((s) => (
                 <Link className="t-row" href={`/sectors/${s.slug}`} key={s.slug}>
                   <span className="n">{s.sector}</span>
                   <span className="o">
-                    {int(s.openings)}
-                    <span className="vh"> openings,</span>
+                    {int(s.postings)}
+                    <span className="vh"> postings,</span>
                   </span>
                   <span className="p">
                     {kfmt(s.pay?.median)}

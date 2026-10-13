@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const sector = looksLikeSlug(slug) ? optional(await getSectors(DAILY))?.find((s) => s.slug === slug) : null;
   if (!sector) return { title: "Hiring season by sector", alternates: { canonical: `/season/${slug}` } };
   return {
-    title: `${sector.sector} hiring season in Singapore: when employers post openings`,
-    description: `How many ${sector.sector} openings Singapore employers post each week or month on MyCareersFuture, and how far back our data goes.`,
+    title: `${sector.sector} hiring season in Singapore: when employers post jobs`,
+    description: `How many ${sector.sector} jobs Singapore employers post each week or month on MyCareersFuture, and how far back our data goes.`,
     alternates: { canonical: `/season/${slug}` },
   };
 }

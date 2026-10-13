@@ -9,7 +9,7 @@ export default function NotFound() {
       <div className="unavailable glass">
         <h1>We couldn&rsquo;t find that page</h1>
         <p>
-          The sector or role may have no openings right now, or the link may be out of date. Nothing is wrong on your
+          The sector or role may have no postings right now, or the link may be out of date. Nothing is wrong on your
           side.
         </p>
         <div className="row">

@@ -8,8 +8,8 @@ from conftest import ANON_KEY, PAY_NULL, SUPABASE_URL
 
 CACHE = "public, s-maxage=3600, stale-while-revalidate=86400"
 NULL_PAY = {"p25": None, "median": None, "p75": None, "mean": None, "n": 0}
-ROLE_KEYS = {"role", "slug", "postings", "openings", "companies", "top_sector", "top_sector_slug", "pay"}
-SECTOR_KEYS = {"sector", "slug", "postings", "openings", "companies", "pay"}
+ROLE_KEYS = {"role", "slug", "postings", "companies", "top_sector", "top_sector_slug", "pay"}
+SECTOR_KEYS = {"sector", "slug", "postings", "companies", "pay"}
 PAY_KEYS = {"p25", "median", "p75", "mean", "n"}
 
 
@@ -39,10 +39,8 @@ def test_meta(client, seeded):
         "last_scrape": "2026-10-13",
         "first_scrape": "2026-09-15",
         "postings": 61234,
-        "openings": 148902,
         "companies": 14876,
         "median_pay": 4250.0,
-        "vacancy_coverage": 0.9731,
         "pay_coverage": 0.8842,
     }
     assert r.headers["cache-control"] == CACHE
@@ -55,10 +53,8 @@ def test_meta_empty_view(client, db):
         "last_scrape": None,
         "first_scrape": None,
         "postings": 0,
-        "openings": 0,
         "companies": 0,
         "median_pay": None,
-        "vacancy_coverage": None,
         "pay_coverage": None,
     }
 
@@ -74,17 +70,16 @@ def test_meta_nulls_stay_null(client, seeded):
 # ------------------------------------------------------------------ sectors
 
 
-def test_sectors_sorted_by_openings(client, seeded):
+def test_sectors_sorted_by_postings(client, seeded):
     r = client.get("/v1/sectors")
     assert r.status_code == 200
     sectors = r.json()["sectors"]
-    assert [s["slug"] for s in sectors] == ["f-b", "information-technology", "precision-engineering"]
+    assert [s["slug"] for s in sectors] == ["information-technology", "f-b", "precision-engineering"]
     assert all(set(s) == SECTOR_KEYS and set(s["pay"]) == PAY_KEYS for s in sectors)
-    assert sectors[1] == {
+    assert sectors[0] == {
         "sector": "Information Technology",
         "slug": "information-technology",
         "postings": 8120,
-        "openings": 15310,
         "companies": 2104,
         "pay": {"p25": 5500.0, "median": 7250.0, "p75": 9500.0, "mean": 7684.52, "n": 7402},
     }
@@ -140,13 +135,12 @@ def test_sector_detail_with_no_pay_and_no_breakdowns(client, seeded):
 
 def test_sector_roles_capped_at_200(client, seeded):
     seeded.tables["stats_sector_role"] = [
-        {"sector_slug": "f-b", "role_slug": f"role-{i:04d}", "role": f"Role {i}", "postings": 1,
-         "openings": i, **PAY_NULL}
+        {"sector_slug": "f-b", "role_slug": f"role-{i:04d}", "role": f"Role {i}", "postings": i, **PAY_NULL}
         for i in range(1, 451)
     ]
     roles = client.get("/v1/sectors/f-b").json()["roles"]
     assert len(roles) == 200
-    assert [x["openings"] for x in roles] == list(range(450, 250, -1))
+    assert [x["postings"] for x in roles] == list(range(450, 250, -1))
 
 
 @pytest.mark.parametrize("slug", ["no-such-sector", "Information-Technology", "a" * 121, "x;drop", "a.b", "f%26b"])
@@ -173,20 +167,19 @@ def test_roles_defaults(client, seeded):
     # default min_postings=5 leaves out Glass Blower (2 postings)
     assert body["total"] == 5
     assert [x["slug"] for x in body["roles"]] == [
-        "service-crew", "software-engineer", "data-analyst", "it-intern", "c-developer-100-remote",
+        "service-crew", "software-engineer", "data-analyst", "c-developer-100-remote", "it-intern",
     ]
     assert all(set(x) == ROLE_KEYS and set(x["pay"]) == PAY_KEYS for x in body["roles"])
     assert body["roles"][0] == {
         "role": "Service Crew",
         "slug": "service-crew",
         "postings": 1300,
-        "openings": 6300,
         "companies": 640,
         "top_sector": "F&B",
         "top_sector_slug": "f-b",
         "pay": {"p25": 2000.0, "median": 2300.0, "p75": 2600.0, "mean": 2320.5, "n": 1233},
     }
-    assert body["roles"][3]["pay"] == NULL_PAY
+    assert body["roles"][4]["pay"] == NULL_PAY
     assert r.headers["cache-control"] == CACHE
 
 
@@ -274,7 +267,7 @@ def test_roles_empty_view(client, db):
 
 def _many_roles(n):
     return [
-        {"role_slug": f"role-{i:05d}", "role": f"Role {i}", "postings": 10, "openings": i, "companies": 1,
+        {"role_slug": f"role-{i:05d}", "role": f"Role {i}", "postings": i, "companies": 1,
          "top_sector": "F&B", "top_sector_slug": "f-b", **PAY_NULL}
         for i in range(1, n + 1)
     ]
@@ -282,21 +275,21 @@ def _many_roles(n):
 
 def test_roles_paging_past_1000_rows(client, seeded):
     seeded.tables["stats_role"] = _many_roles(2500)
-    body = client.get("/v1/roles", params={"limit": 1000}).json()
+    body = client.get("/v1/roles", params={"limit": 1000, "min_postings": 0}).json()
     assert body["total"] == 2500
-    assert [x["openings"] for x in body["roles"]] == list(range(2500, 1500, -1))
+    assert [x["postings"] for x in body["roles"]] == list(range(2500, 1500, -1))
 
-    body = client.get("/v1/roles", params={"limit": 1000, "offset": 1800}).json()
+    body = client.get("/v1/roles", params={"limit": 1000, "offset": 1800, "min_postings": 0}).json()
     assert body["total"] == 2500
-    assert [x["openings"] for x in body["roles"]] == list(range(700, 0, -1))
+    assert [x["postings"] for x in body["roles"]] == list(range(700, 0, -1))
 
 
 def test_roles_when_server_row_cap_is_below_the_requested_limit(client, seeded):
     seeded.tables["stats_role"] = _many_roles(730)
     seeded.max_rows = 100  # Supabase "Max rows" setting lowered
-    body = client.get("/v1/roles", params={"limit": 250, "offset": 30}).json()
+    body = client.get("/v1/roles", params={"limit": 250, "offset": 30, "min_postings": 0}).json()
     assert body["total"] == 730
-    assert [x["openings"] for x in body["roles"]] == list(range(700, 450, -1))
+    assert [x["postings"] for x in body["roles"]] == list(range(700, 450, -1))
     assert len(seeded.requests) == 3
 
 
@@ -320,22 +313,20 @@ def test_role_detail(client, seeded):
     assert body["seniority"] == [{"name": "Executive", "postings": 240}]
     assert body["companies_hiring"] == [
         {
-            "company": "Sample Logistics Pte Ltd",
-            "postings": 1,
-            "openings": 12,
-            "pay_min": None,
-            "pay_max": None,
-            "latest_posted": "2026-09-30",
-            "url": "https://www.mycareersfuture.gov.sg/job/data-analyst-sample-9f8e7d",
-        },
-        {
             "company": "Example Analytics Pte Ltd",
             "postings": 3,
-            "openings": 6,
             "pay_min": 5000,
             "pay_max": 7000,
             "latest_posted": "2026-10-09",
             "url": "https://www.mycareersfuture.gov.sg/job/data-analyst-example-0a1b2c",
+        },
+        {
+            "company": "Sample Logistics Pte Ltd",
+            "postings": 1,
+            "pay_min": None,
+            "pay_max": None,
+            "latest_posted": "2026-09-30",
+            "url": "https://www.mycareersfuture.gov.sg/job/data-analyst-sample-9f8e7d",
         },
     ]
     assert r.headers["cache-control"] == CACHE
@@ -352,7 +343,7 @@ def test_role_detail_with_no_pay_and_no_breakdowns(client, seeded):
 
 def test_role_companies_capped_at_50_and_sectors_page_past_1000(client, seeded):
     seeded.tables["stats_role_company"] = [
-        {"role_slug": "service-crew", "company": f"Company {i:04d}", "postings": 1, "openings": i,
+        {"role_slug": "service-crew", "company": f"Company {i:04d}", "postings": i,
          "pay_min": 2000, "pay_max": 2600, "latest_posted": "2026-10-01", "url": None}
         for i in range(1, 1301)
     ]
@@ -361,7 +352,7 @@ def test_role_companies_capped_at_50_and_sectors_page_past_1000(client, seeded):
         for i in range(1, 1206)
     ]
     body = client.get("/v1/roles/service-crew").json()
-    assert [c["openings"] for c in body["companies_hiring"]] == list(range(1300, 1250, -1))
+    assert [c["postings"] for c in body["companies_hiring"]] == list(range(1300, 1250, -1))
     assert [s["postings"] for s in body["sectors"]] == list(range(1205, 0, -1))
 
 
@@ -383,7 +374,7 @@ def test_trends_all_sectors_weekly_under_90_days(client, seeded):
     assert [p["period"] for p in body["points"]] == [
         "2026-09-14", "2026-09-21", "2026-09-28", "2026-10-05", "2026-10-12",
     ]
-    assert body["points"][0] == {"period": "2026-09-14", "postings": 11000, "openings": 24600, "median_pay": 4240.0}
+    assert body["points"][0] == {"period": "2026-09-14", "postings": 11000, "median_pay": 4240.0}
     assert r.headers["cache-control"] == CACHE
     assert client.get("/v1/trends", params={"sector": "all"}).json() == body
 
@@ -393,8 +384,8 @@ def test_trends_for_one_sector_keeps_null_pay(client, seeded):
     assert body == {
         "granularity": "week",
         "points": [
-            {"period": "2026-09-14", "postings": 1500, "openings": 2900, "median_pay": 7200.0},
-            {"period": "2026-09-21", "postings": 3, "openings": 3, "median_pay": None},
+            {"period": "2026-09-14", "postings": 1500, "median_pay": 7200.0},
+            {"period": "2026-09-21", "postings": 3, "median_pay": None},
         ],
     }
 
@@ -405,11 +396,11 @@ def _trend_rows(slug, n_weeks, months):
     start = date(2001, 1, 1)  # a Monday
     weeks = [
         {"sector_slug": slug, "granularity": "week", "period": (start + timedelta(weeks=i)).isoformat(),
-         "postings": i, "openings": i * 2, "pay_median": 3000.0}
+         "postings": i, "pay_median": 3000.0}
         for i in range(n_weeks)
     ]
     return weeks + [
-        {"sector_slug": slug, "granularity": "month", "period": m, "postings": 100, "openings": 200,
+        {"sector_slug": slug, "granularity": "month", "period": m, "postings": 100,
          "pay_median": 3100.0}
         for m in months
     ]
@@ -424,7 +415,7 @@ def test_trends_switch_to_monthly_at_90_days(client, seeded):
     body = client.get("/v1/trends").json()
     assert body["granularity"] == "month"
     assert [p["period"] for p in body["points"]] == months
-    assert body["points"][0] == {"period": "2001-01-01", "postings": 100, "openings": 200, "median_pay": 3100.0}
+    assert body["points"][0] == {"period": "2001-01-01", "postings": 100, "median_pay": 3100.0}
 
 
 def test_trends_paging_past_1000_rows(client, seeded):

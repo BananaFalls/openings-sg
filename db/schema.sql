@@ -14,9 +14,12 @@
 --   live      a posting seen in the latest scrape: last_seen = max(last_seen).
 --             If a scrape misses a sector, that sector's jobs are not live until
 --             the next good run.
---   postings  listings. openings = vacancies, so one posting can count several
---             times. A posting whose vacancy count is not yet known counts as 1;
---             stats_meta.vacancy_coverage says how many are known.
+--   postings  listings. Every statistic counts postings. MCF's search results do
+--             not say how many people a posting is hiring for, so vacancies are
+--             not counted (the `vacancies` column and set_vacancies() are unused).
+--   history   one small row per day, sector and popular role, written by
+--             snapshot_stats() after each full crawl and never pruned. MCF only
+--             shows what is live today, so this cannot be rebuilt later.
 --   pay       monthly SGD, the midpoint of the advertised range (salary_mid).
 
 begin;
@@ -68,6 +71,35 @@ alter table public.jobs enable row level security;
 revoke all on public.jobs from anon, authenticated;
 grant select, insert, update, delete on public.jobs to service_role;
 
+-- ---------------------------------------------------------------- history
+-- Daily snapshots of the live postings. `day` is the scrape date (Singapore).
+-- These rows are the long-term record: they stay when old jobs are pruned.
+
+create table if not exists public.history_sector (
+  day          date    not null,
+  sector_slug  text    not null,     -- 'all' = every sector together
+  postings     integer not null,     -- live that day
+  new_postings integer not null,     -- first seen that day (on the first day: all of them)
+  companies    integer not null,
+  pay_median   integer,              -- monthly SGD, NULL when no posting stated usable pay
+  primary key (day, sector_slug)
+);
+
+-- Roles with at least 10 live postings that day, to keep this table small.
+create table if not exists public.history_role (
+  day          date    not null,
+  role_slug    text    not null,
+  postings     integer not null,
+  pay_median   integer,
+  primary key (day, role_slug)
+);
+
+-- Not public yet: nothing reads these until there is enough history to show.
+alter table public.history_sector enable row level security;
+alter table public.history_role   enable row level security;
+revoke all on public.history_sector, public.history_role from anon, authenticated;
+grant select, insert, update, delete on public.history_sector, public.history_role to service_role;
+
 -- ---------------------------------------------------------------- stats views
 -- Pay columns are whole dollars. pay_n is how many postings the pay figures rest on.
 
@@ -88,10 +120,8 @@ select
   (select max(last_seen) from public.jobs)                                          as last_scrape,
   (select min(first_seen) from public.jobs)                                         as first_scrape,
   count(*)::int                                                                     as postings,
-  coalesce(sum(coalesce(vacancies, 1)), 0)::int                                     as openings,
   count(distinct company)::int                                                      as companies,
   round(percentile_cont(0.5) within group (order by salary_mid::float8))::int       as pay_median,
-  round(count(vacancies)::numeric / nullif(count(*), 0), 4)                         as vacancy_coverage,
   round(count(salary_mid)::numeric / nullif(count(*), 0), 4)                        as pay_coverage
 from public.jobs
 where last_seen = (select max(last_seen) from public.jobs);
@@ -101,7 +131,6 @@ select
   mode() within group (order by sector)                                             as sector,
   sector_slug,
   count(*)::int                                                                     as postings,
-  sum(coalesce(vacancies, 1))::int                                                  as openings,
   count(distinct company)::int                                                      as companies,
   round(percentile_cont(0.25) within group (order by salary_mid::float8))::int      as pay_p25,
   round(percentile_cont(0.5)  within group (order by salary_mid::float8))::int      as pay_median,
@@ -171,7 +200,6 @@ select
   role_slug,
   mode() within group (order by role)                                               as role,
   count(*)::int                                                                     as postings,
-  sum(coalesce(vacancies, 1))::int                                                  as openings,
   round(percentile_cont(0.25) within group (order by salary_mid::float8))::int      as pay_p25,
   round(percentile_cont(0.5)  within group (order by salary_mid::float8))::int      as pay_median,
   round(percentile_cont(0.75) within group (order by salary_mid::float8))::int      as pay_p75,
@@ -185,7 +213,7 @@ group by sector_slug, role_slug;
 -- top_sector = the sector with the most postings for the role.
 create materialized view public.stats_role as
 with live as (
-  select role_slug, role, sector_slug, sector, company, vacancies, salary_mid
+  select role_slug, role, sector_slug, sector, company, salary_mid
   from public.jobs
   where last_seen = (select max(last_seen) from public.jobs)
 ), r as (
@@ -193,7 +221,6 @@ with live as (
     role_slug,
     mode() within group (order by role)                                             as role,
     count(*)::int                                                                   as postings,
-    sum(coalesce(vacancies, 1))::int                                                as openings,
     count(distinct company)::int                                                    as companies,
     round(percentile_cont(0.25) within group (order by salary_mid::float8))::int    as pay_p25,
     round(percentile_cont(0.5)  within group (order by salary_mid::float8))::int    as pay_median,
@@ -209,7 +236,7 @@ with live as (
   ) x
   order by role_slug, n desc, sector_slug
 )
-select r.role_slug, r.role, r.postings, r.openings, r.companies,
+select r.role_slug, r.role, r.postings, r.companies,
        s.sector as top_sector, s.sector_slug as top_sector_slug,
        r.pay_p25, r.pay_median, r.pay_p75, r.pay_mean, r.pay_n
 from r join s on s.role_slug = r.role_slug;
@@ -240,7 +267,6 @@ select
   role_slug,
   company,
   count(*)::int                                                                     as postings,
-  sum(coalesce(vacancies, 1))::int                                                  as openings,
   min(coalesce(nullif(salary_min, 0), salary_max)) filter (where salary_mid is not null) as pay_min,
   max(coalesce(nullif(salary_max, 0), salary_min)) filter (where salary_mid is not null) as pay_max,
   max(posted_date)                                                                  as latest_posted,
@@ -259,7 +285,6 @@ with j as (
   select a.sector_slug,
          g.granularity,
          date_trunc(g.granularity, a.posted_date::timestamp)::date as period,
-         coalesce(a.vacancies, 1)                                  as vacancies,
          a.salary_mid::float8                                      as mid
   from public.jobs a
   cross join (values ('week'::text), ('month'::text)) as g(granularity)
@@ -269,7 +294,6 @@ select
   granularity,
   period,
   count(*)::int                                                                     as postings,
-  sum(vacancies)::int                                                               as openings,
   round(percentile_cont(0.5) within group (order by mid))::int                      as pay_median
 from j
 group by grouping sets ((granularity, period, sector_slug), (granularity, period));
@@ -300,7 +324,7 @@ grant select on
 to anon, service_role;
 
 -- ---------------------------------------------------------------- functions
--- All three are for the scraper. None may be called by anon (see the revokes below).
+-- All four are for the scraper. None may be called by anon (see the revokes below).
 
 -- Rebuild every stats view. CONCURRENTLY keeps the old numbers readable while the
 -- new ones are computed, and because it is one transaction they all switch together.
@@ -323,6 +347,49 @@ begin
   refresh materialized view concurrently public.stats_role_dim;
   refresh materialized view concurrently public.stats_role_company;
   refresh materialized view concurrently public.stats_trend;
+end;
+$$;
+
+-- Save today's row for every sector and popular role. Returns the day saved, or
+-- NULL when there are no jobs. Running it again for the same day overwrites that
+-- day. The scraper calls it only after a full, clean crawl, so a partial day
+-- never lands in the history as a false dip.
+create or replace function public.snapshot_stats()
+returns date
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  d date := (select max(last_seen) from public.jobs);
+begin
+  if d is null then
+    return null;
+  end if;
+
+  insert into public.history_sector (day, sector_slug, postings, new_postings, companies, pay_median)
+  select d,
+         case when grouping(sector_slug) = 1 then 'all' else sector_slug end,
+         count(*)::int,
+         (count(*) filter (where first_seen = d))::int,
+         count(distinct company)::int,
+         round(percentile_cont(0.5) within group (order by salary_mid::float8))::int
+  from public.jobs
+  where last_seen = d
+  group by grouping sets ((sector_slug), ())
+  on conflict (day, sector_slug) do update
+    set postings = excluded.postings, new_postings = excluded.new_postings,
+        companies = excluded.companies, pay_median = excluded.pay_median;
+
+  delete from public.history_role where day = d;
+  insert into public.history_role (day, role_slug, postings, pay_median)
+  select d, role_slug, count(*)::int,
+         round(percentile_cont(0.5) within group (order by salary_mid::float8))::int
+  from public.jobs
+  where last_seen = d
+  group by role_slug
+  having count(*) >= 10;
+
+  return d;
 end;
 $$;
 
@@ -364,9 +431,11 @@ as $$
 $$;
 
 revoke all on function public.refresh_stats()      from public, anon, authenticated;
+revoke all on function public.snapshot_stats()     from public, anon, authenticated;
 revoke all on function public.set_vacancies(jsonb) from public, anon, authenticated;
 revoke all on function public.prune_raw(integer)   from public, anon, authenticated;
 grant execute on function public.refresh_stats()      to service_role;
+grant execute on function public.snapshot_stats()     to service_role;
 grant execute on function public.set_vacancies(jsonb) to service_role;
 grant execute on function public.prune_raw(integer)   to service_role;
 

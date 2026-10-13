@@ -6,7 +6,6 @@ import { int, niceMax } from "@/lib/format";
 export type TrendChartPoint = {
   label: string;
   long: string;
-  openings: number;
   postings: number;
   partial: boolean;
 };
@@ -16,7 +15,7 @@ const M = { t: 26, b: 28 };
 const IH = H - M.t - M.b;
 
 /**
- * Openings per week or month. Drawn across in percentages and down in pixels, so it is
+ * Postings per week or month. Drawn across in percentages and down in pixels, so it is
  * server-rendered once and stays sharp at any width. The only client-side part is the hover tip.
  */
 export function TrendChart({
@@ -33,10 +32,10 @@ export function TrendChart({
   const gid = "ag" + useId().replace(/[^a-zA-Z0-9]/g, "");
   const [hover, setHover] = useState<number | null>(null);
   const n = list.length;
-  const ymax = niceMax(Math.max(...list.map((b) => b.openings)) * 1.08);
+  const ymax = niceMax(Math.max(...list.map((b) => b.postings)) * 1.08);
   const x = (i: number) => (n === 1 ? 50 : (i / (n - 1)) * 100);
   const y = (v: number) => M.t + IH - (v / ymax) * IH;
-  const pts = list.map((b, i) => [x(i), y(b.openings)] as const);
+  const pts = list.map((b, i) => [x(i), y(b.postings)] as const);
   const path = (from: number, to: number) =>
     pts
       .slice(from, to + 1)
@@ -73,7 +72,7 @@ export function TrendChart({
   return (
     <div className="chart">
       <div className="plot">
-        <svg height={H} role="img" aria-label={`Openings per ${mode}. The numbers are in the table below the chart.`}>
+        <svg height={H} role="img" aria-label={`Postings per ${mode}. The numbers are in the table below the chart.`}>
           <defs>
             <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" style={{ stopColor: "var(--accent)", stopOpacity: 0.35 }} />
@@ -157,12 +156,12 @@ export function TrendChart({
         {h && hover != null ? (
           <div
             className={`tip${x(hover) < 18 ? " left" : x(hover) > 82 ? " right" : ""}`}
-            style={{ left: `${x(hover)}%`, top: y(h.openings) }}
+            style={{ left: `${x(hover)}%`, top: y(h.postings) }}
           >
             {h.long}
             {h.partial ? " (so far)" : ""}
             <br />
-            <b>{int(h.openings)}</b> openings · <b>{int(h.postings)}</b> postings
+            <b>{int(h.postings)}</b> postings
           </div>
         ) : null}
       </div>

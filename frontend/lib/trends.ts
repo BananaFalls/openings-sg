@@ -6,7 +6,6 @@ export type Bucket = {
   label: string;
   /** Full label: "Week of 6 Oct 2026" or "October 2026". */
   long: string;
-  openings: number;
   postings: number;
   medianPay: number | null;
   /** Calendar month 0-11, when known. */
@@ -60,7 +59,7 @@ const nextStart = (t: number, mode: "week" | "month") => {
  * Shapes API trend points for the charts.
  *
  * - The API leaves out periods with no postings. Those gaps are real zeros, so they are
- *   filled with 0 openings and no pay, to keep the time axis even.
+ *   filled with 0 postings and no pay, to keep the time axis even.
  * - Periods before we started collecting are dropped. They only hold postings that were
  *   still listed on the first day, so they undercount and would look like real history.
  */
@@ -90,7 +89,7 @@ export function trendView(
       const end = Math.max(...keys);
       for (let t = Math.min(...keys), guard = 0; t <= end && guard < 600; t = nextStart(t, mode), guard++) {
         timed.push({
-          p: byStart.get(t) ?? { period: new Date(t).toISOString().slice(0, 10), postings: 0, openings: 0, median_pay: null },
+          p: byStart.get(t) ?? { period: new Date(t).toISOString().slice(0, 10), postings: 0, median_pay: null },
           start: t,
         });
       }
@@ -117,7 +116,6 @@ export function trendView(
     return {
       label,
       long,
-      openings: Number(p.openings) || 0,
       postings: Number(p.postings) || 0,
       medianPay: typeof p.median_pay === "number" ? p.median_pay : null,
       month: d ? d.getUTCMonth() : null,
@@ -129,7 +127,7 @@ export function trendView(
   });
   // The busiest period and the average only look at finished periods, when there are any.
   const done = list.some((b) => !b.partial) ? list.filter((b) => !b.partial) : list;
-  const vals = done.map((b) => b.openings);
+  const vals = done.map((b) => b.postings);
   const max = vals.length ? Math.max(...vals) : 0;
   return {
     mode,
