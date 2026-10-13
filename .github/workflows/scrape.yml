@@ -1,0 +1,42 @@
+name: Daily scrape
+
+# Crawls every live MyCareersFuture job into Supabase, looks up vacancy counts for
+# the newest jobs that lack them, then refreshes the stats views.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   SUPABASE_URL          e.g. https://abcdefgh.supabase.co
+#   SUPABASE_SERVICE_KEY  the service role (secret) key, not the anon key
+
+on:
+  schedule:
+    # 19:17 UTC = 03:17 Singapore time (SGT, UTC+8), every day. A quiet hour for
+    # MCF, and off the top of the hour, when GitHub's scheduler is busiest.
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    # The crawl takes about 20 minutes and 2,500 vacancy lookups 45 or more
+    # (one request a second plus the round trip to Singapore), so allow slack.
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Exits 1 if a category came back empty or stopped early, so the run shows
+      # as failed. What it did fetch is saved and the stats are refreshed first.
+      - name: Scrape MyCareersFuture into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: python scraper/mcf_scraper.py --all --supabase --details 2500

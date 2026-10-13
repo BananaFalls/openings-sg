@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Openings SG</title>
+<style>
+/* Layout: frosted glass panels over a Marina Bay dusk sky (dark-first; a softer morning palette for light mode). */
+:root{
+  --bg:#0B1424; --ink:#F4E9D8; --muted:#A9B4C8; --faint:#71809B;
+  --glass:rgba(28,42,72,.42); --glass-strong:rgba(32,48,82,.74); --glass-brd:rgba(244,227,195,.14);
+  --line:rgba(244,227,195,.10); --track:rgba(244,227,195,.08);
+  --accent:#FF8A4C; --accent-soft:rgba(255,138,76,.17); --on-accent:#1A0D05; --coral:#F06A8A; --amber:#F4C27A; --sky:#7FB2E5;
+  --orb1:#E8682E; --orb2:#C93A6E; --orb3:#2F5FA8;
+  --shadow:0 14px 44px -16px rgba(0,0,0,.7); color-scheme:dark;
+  /* Apple's San Francisco via the system stack; other devices use their own system UI font */
+  --f-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,"Segoe UI",Roboto,sans-serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,"Segoe UI",Roboto,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#F3ECE2; --ink:#14203A; --muted:#4E5B74; --faint:#8590A6;
+  --glass:rgba(255,255,255,.48); --glass-strong:rgba(255,255,255,.74); --glass-brd:rgba(255,255,255,.8);
+  --line:rgba(20,32,58,.11); --track:rgba(20,32,58,.08);
+  --accent:#C24E14; --accent-soft:rgba(194,78,20,.13); --on-accent:#FFFFFF; --coral:#C23A62; --amber:#9A6510; --sky:#2F6DB5;
+  --orb1:#FFB088; --orb2:#F49AB6; --orb3:#9DC2EC;
+  --shadow:0 12px 40px -16px rgba(20,32,58,.32); color-scheme:light }}
+:root[data-theme="light"]{
+  --bg:#F3ECE2; --ink:#14203A; --muted:#4E5B74; --faint:#8590A6;
+  --glass:rgba(255,255,255,.48); --glass-strong:rgba(255,255,255,.74); --glass-brd:rgba(255,255,255,.8);
+  --line:rgba(20,32,58,.11); --track:rgba(20,32,58,.08);
+  --accent:#C24E14; --accent-soft:rgba(194,78,20,.13); --on-accent:#FFFFFF; --coral:#C23A62; --amber:#9A6510; --sky:#2F6DB5;
+  --orb1:#FFB088; --orb2:#F49AB6; --orb3:#9DC2EC;
+  --shadow:0 12px 40px -16px rgba(20,32,58,.32); color-scheme:light }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.75}
+.o1{width:50vmax;height:50vmax;background:var(--orb1);bottom:-22vmax;left:-12vmax;opacity:.6;animation:drift 26s ease-in-out infinite alternate}
+.o2{width:40vmax;height:40vmax;background:var(--orb2);top:30vh;right:-16vmax;opacity:.55;animation:drift 32s ease-in-out infinite alternate-reverse}
+.o3{width:44vmax;height:44vmax;background:var(--orb3);top:-20vmax;left:28vw;opacity:.6;animation:drift 38s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(6vmax,4vmax) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.orb{animation:none}}
+
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:20px 56px;display:flex;flex-direction:column;gap:22px}
+.glass{background:var(--glass);border:1px solid var(--glass-brd);-webkit-backdrop-filter:blur(20px) saturate(150%);backdrop-filter:blur(20px) saturate(150%);box-shadow:var(--shadow)}
+
+/* top bar */
+.topbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:5;border-radius:999px;padding:8px 10px 8px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin-right:auto}
+.brand svg{flex:none}
+.pill{font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.sample{background:rgba(217,154,30,.16);color:var(--amber)}
+.btn{font:inherit;font-size:13px;font-weight:600;border-radius:999px;padding:8px 14px;border:1px solid var(--line);background:var(--glass-strong);color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.msg{font-size:13px;color:var(--coral);width:100%;padding:0 6px 4px}
+.nav{display:flex;gap:2px;background:var(--track);border-radius:999px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 13px;border-radius:999px;white-space:nowrap}
+.topbar .nav{order:3}
+@media (max-width:1060px){.topbar .nav{order:9;flex-basis:100%;justify-content:flex-start}}
+
+/* overview teasers */
+.teasers{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,.9fr);gap:14px}
+.teaser{border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:8px;color:var(--ink);text-decoration:none;min-width:0}
+a.teaser:hover{border-color:var(--accent)}
+.t-big{font-family:var(--f-display);font-weight:700;font-size:28px;letter-spacing:-.025em;line-height:1.1}
+.t-note{font-size:13.5px;color:var(--muted)}
+.t-go{font-size:13.5px;font-weight:700;color:var(--accent);text-decoration:none;margin-top:auto;padding-top:6px}
+.t-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:auto}
+.spark svg{display:block;width:100%;height:70px}
+.t-list{display:flex;flex-direction:column}
+.t-row{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:baseline;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13.5px;border-radius:6px}
+.t-row:hover .n{color:var(--accent)}
+.t-row:focus-visible{outline:2px solid var(--accent)}
+.t-row .n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-row .o,.t-row .p{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.t-row .p{color:var(--muted);min-width:70px;text-align:right}
+@media (max-width:980px){.teasers{grid-template-columns:1fr}}
+.nav a[aria-current="page"]{background:var(--glass-strong);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.view{display:flex;flex-direction:column;gap:22px}
+.tagline{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--coral)}
+
+/* about */
+.about-hero{padding-top:28px;max-width:860px}
+.about-hero h1{font-size:clamp(34px,5.4vw,62px)}
+.motto{border-radius:28px;padding:clamp(22px,4vw,40px);display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:center}
+.motto blockquote{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.2vw,48px);line-height:1.04;letter-spacing:-.035em;text-wrap:balance}
+.motto blockquote span{color:var(--accent)}
+.motto p{margin:0;color:var(--muted)}
+.story{border-radius:28px;padding:clamp(22px,5vw,56px);display:grid;grid-template-columns:180px minmax(0,1fr);gap:clamp(18px,4vw,48px)}
+.story aside{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:14px}
+.story aside .when{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.prose{max-width:62ch;font-size:17px;line-height:1.65;min-width:0}
+.prose p{margin:0 0 1.05em}
+.prose h2{margin:1.6em 0 .5em;font-size:22px}
+.prose h2:first-child{margin-top:0}
+.prose .q{display:block;border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:1.2em 0;color:var(--ink);font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.45}
+.prose .sig{font-family:var(--f-display);font-weight:600;color:var(--muted)}
+.offer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.offer .card{border-radius:20px;padding:18px}
+.offer .card h3{font-size:17px;margin-bottom:6px}
+.offer .card p{margin:0;font-size:14px;color:var(--muted)}
+.offer .card .k{font-family:var(--f-mono);font-size:12px;color:var(--accent);margin-bottom:8px;display:block}
+.cta{border-radius:24px;padding:22px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.cta p{margin:0;max-width:56ch}
+a.btn{text-decoration:none}
+
+/* coffee */
+.coffee{border-radius:28px;padding:clamp(22px,4vw,40px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,44px);align-items:start}
+.cup{width:120px;height:120px}
+.cup .steam{animation:steam 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:bottom}
+.cup .steam:nth-child(2){animation-delay:.6s}.cup .steam:nth-child(3){animation-delay:1.2s}
+@keyframes steam{0%,100%{opacity:.25;transform:translateY(2px)}50%{opacity:.85;transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){.cup .steam{animation:none;opacity:.6}}
+.tiers{display:flex;flex-direction:column;gap:10px}
+.tier{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px;border-radius:18px;background:var(--glass-strong);border:1px solid var(--line)}
+.tier:hover{border-color:var(--accent)}
+.tier:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tier[aria-checked="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tier .ico{font-size:26px;width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft)}
+.tier .t{font-weight:700}
+.tier .d{font-size:13px;color:var(--muted)}
+.tier .amt{font-family:var(--f-mono);font-weight:500;font-size:16px}
+.give{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.give .btn.primary{justify-content:center;padding:13px 18px;font-size:15px}
+.give .btn[aria-disabled="true"]{opacity:.55;pointer-events:none}
+.paynow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;border:1px dashed var(--line);font-size:13.5px}
+.paynow code{font-family:var(--f-mono);font-size:14px;user-select:all;overflow-wrap:anywhere}
+.small{font-size:12.5px;color:var(--muted);margin:0}
+.uses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.uses .card{border-radius:20px;padding:18px}
+.uses h3{font-size:16px;margin-bottom:6px}
+.uses p{margin:0;font-size:14px;color:var(--muted)}
+@media (max-width:760px){.coffee,.uses{grid-template-columns:1fr}}
+
+/* role → companies */
+.role-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--ink)}
+.role-btn:hover{color:var(--accent)}
+.role-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.caret{display:inline-block;color:var(--accent);font-size:16px;transition:transform .15s}
+.role-row.open .caret{transform:rotate(90deg)}
+.role-row.open td{border-bottom-color:transparent}
+.offers-row td{padding:0 0 14px}
+.offers{background:var(--glass-strong);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;white-space:normal}
+.offers-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
+.offers-head span{color:var(--muted);font-size:12px}
+.offer-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.offer-list li{padding:10px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.offer-list li:last-child{border-bottom:0}
+.oi-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.oi-co{font-weight:600;font-size:13.5px}
+.oi-pay{font-family:var(--f-mono);font-size:13px;color:var(--accent);white-space:nowrap}
+.oi-meta{font-size:12px;color:var(--muted);line-height:1.5}
+.oi-meta a{color:var(--accent);font-weight:600}
+.offers .range{height:6px}
+.offers .btn{align-self:flex-start}
+
+/* u-6 style chart */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.src{margin-top:14px;line-height:1.6}
+.src a{color:var(--accent)}
+
+/* deep-dive page */
+.back{display:inline-block;font-size:13.5px;font-weight:700;color:var(--accent);text-decoration:none;margin-bottom:10px}
+.dd-title{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.03em}
+.dd-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip.neg{background:rgba(240,106,138,.15);color:var(--coral)}
+.dd-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dd-actions select{max-width:100%}
+
+/* about (short) */
+.story-short{border-radius:28px;padding:clamp(22px,4.5vw,44px);display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:clamp(18px,4vw,44px);align-items:start}
+.q1{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.2vw,34px);line-height:1.12;letter-spacing:-.03em;color:var(--accent);text-wrap:balance}
+.about-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.kopi,.enq{border-radius:26px;padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.kopi-head{display:flex;gap:14px;align-items:flex-start}
+.kopi-head .cup{width:72px;height:72px;flex:none}
+.kopi .tiers{gap:8px}
+.kopi .tier{padding:10px 12px}
+.kopi .tier .ico{width:36px;height:36px;font-size:20px}
+.enq-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.enq-list li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.enq-list li span{color:var(--muted);font-size:13px}
+.enq .paynow{margin-top:auto}
+.about-note{text-align:center}
+.about-note a{color:var(--accent);font-weight:700;text-decoration:none}
+@media (max-width:820px){.story-short,.about-grid{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .motto,.story{grid-template-columns:1fr}
+  .offer{grid-template-columns:1fr}
+  .prose{font-size:16px}
+}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr);gap:22px;align-items:end;padding-top:18px}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(32px,4.6vw,52px);line-height:1.02;letter-spacing:-.03em;margin:8px 0 10px;text-wrap:balance}
+.lede{color:var(--muted);max-width:44ch;margin:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .label{font-size:12px;color:var(--muted);font-weight:600}
+.kpi .val{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,2.4vw,30px);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;overflow-wrap:anywhere}
+.kpi .sub{font-size:12px;color:var(--faint)}
+.kpi.small .val{font-size:clamp(17px,1.7vw,21px);line-height:1.2}
+
+/* panels */
+.panel{border-radius:26px;padding:22px;min-width:0}
+.panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+h2{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:-.02em;margin:2px 0 0;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:16px;margin:0 0 10px;letter-spacing:-.01em}
+.hint{font-size:13px;color:var(--muted);margin:4px 0 0}
+select,input[type=search]{font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--glass-strong);border:1px solid var(--line);border-radius:999px;padding:8px 14px}
+input[type=search]{width:200px;max-width:100%}
+
+.season{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px}
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.tip{position:absolute;pointer-events:none;background:var(--glass-strong);border:1px solid var(--glass-brd);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:12px;padding:8px 10px;font-size:12px;box-shadow:var(--shadow);white-space:nowrap;transform:translate(-50%,-110%)}
+.tip b{font-family:var(--f-mono);font-weight:500}
+.insights{display:flex;flex-direction:column;gap:12px}
+.insight{border-radius:16px;padding:12px 14px;background:var(--glass-strong);border:1px solid var(--line)}
+.insight .label{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.insight .big{font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.insight .note{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.up{color:var(--accent)} .down{color:var(--coral)}
+
+/* sectors */
+.sectors{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.sector{all:unset;box-sizing:border-box;cursor:pointer;border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--glass-strong);border:1px solid var(--line);transition:transform .15s ease,border-color .15s}
+.sector:hover{transform:translateY(-2px);border-color:var(--accent)}
+.sector:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sector[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sec-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sec-name{font-weight:700;font-size:14px;line-height:1.3}
+.sec-open{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;text-align:right;font-variant-numeric:tabular-nums}
+.sec-open small{display:block;font-family:var(--f-body);font-size:11px;font-weight:600;color:var(--muted)}
+.sec-pay{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+.sec-pay strong{color:var(--ink);font-family:var(--f-mono);font-weight:500;font-size:13px}
+.sec-foot{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.range{position:relative;height:8px;border-radius:99px;background:var(--track)}
+.range span{position:absolute;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,var(--accent-soft),var(--accent))}
+.range i{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+
+/* detail */
+.detail-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.stat{border-radius:14px;padding:10px 12px;background:var(--glass-strong);border:1px solid var(--line);min-width:0}
+.stat .label{font-size:11.5px;color:var(--muted);font-weight:600}
+.stat .v{font-family:var(--f-mono);font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat.key .v{color:var(--accent)}
+.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px}
+.col{display:flex;flex-direction:column;gap:22px;min-width:0}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.num,th.num{text-align:right;font-family:var(--f-mono)}
+td.role{font-weight:600;min-width:140px}
+td.rng{min-width:120px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:120px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:12.5px}
+.bar-row .track{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+.bar-row .fill{height:100%;border-radius:99px;background:var(--accent)}
+.bar-row .pct{text-align:right;font-family:var(--f-mono);color:var(--muted)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.foot{font-size:12.5px;color:var(--muted);border-radius:20px;padding:16px 20px}
+.foot code{font-family:var(--f-mono);font-size:12px;background:var(--track);padding:1px 6px;border-radius:6px}
+
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr}
+  .season{grid-template-columns:1fr}
+  .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .detail-grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .panel{padding:16px;border-radius:22px}
+  .split{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .topbar{border-radius:22px}
+  .bar-row{grid-template-columns:96px minmax(0,1fr) 40px}
+  input[type=search]{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span></div>
+
+<div class="wrap">
+  <header class="topbar glass">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="13" width="5" height="11" rx="2" fill="var(--accent)"/><rect x="10.5" y="7" width="5" height="17" rx="2" fill="var(--accent)" opacity=".7"/><rect x="19" y="2" width="5" height="22" rx="2" fill="var(--coral)"/></svg>
+      Openings SG
+    </div>
+    <nav class="nav" aria-label="Pages">
+      <a href="#overview" id="navOverview" aria-current="page">Overview</a>
+      <a href="#season" id="navSeason">Hiring season</a>
+      <a href="#sectors" id="navSectors">Sectors</a>
+      <a href="#about" id="navAbout">About</a>
+    </nav>
+    <span id="sourcePill" class="pill sample">Sample data</span>
+    <label class="btn primary" for="fileInput">Load scraped data</label>
+    <input id="fileInput" type="file" accept=".json,application/json" hidden>
+    <button id="resetBtn" class="btn" type="button" hidden>Back to sample</button>
+    <div id="msg" class="msg" hidden></div>
+  </header>
+
+  <main id="overviewView" class="view">
+  <section class="hero">
+    <div>
+      <div class="tagline">For the unemployed, by an unemployed.</div>
+      <h1>Find where Singapore is hiring, and what it pays.</h1>
+      <p class="lede">Openings and advertised monthly salaries by sector and role from MyCareersFuture, plus the months when employers post the most jobs.</p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section class="teasers" aria-label="Explore">
+    <a class="teaser glass" href="#season">
+      <span class="eyebrow">Hiring season</span>
+      <span class="t-big" id="tPeak">–</span>
+      <span class="t-note" id="tPeakNote"></span>
+      <span id="tSpark" class="spark"></span>
+      <span class="t-go">See the full trend →</span>
+    </a>
+    <div class="teaser glass">
+      <span class="eyebrow">Top sectors right now</span>
+      <div id="tSectors" class="t-list"></div>
+      <a class="t-go" href="#sectors">Compare all sectors and roles →</a>
+    </div>
+    <div class="teaser glass">
+      <span class="eyebrow">Who's behind this</span>
+      <span class="t-big" style="font-size:20px">An engineer who's job hunting too.</span>
+      <span class="t-note">Free, no ads, no sign-up. Built from the same refresh button you're using.</span>
+      <span class="t-links"><a class="t-go" href="#about">Read the story →</a><a class="t-go" href="#kopi">Buy me a kopi →</a></span>
+    </div>
+  </section>
+  </main>
+
+  <main id="seasonView" class="view" hidden>
+  <section class="panel glass" aria-labelledby="seasonTitle">
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow">Hiring season</div>
+        <h2 id="seasonTitle">When employers post the most openings</h2>
+      </div>
+      <select id="trendSector" aria-label="Sector for hiring trend"></select>
+    </div>
+    <div class="season">
+      <div class="chart" id="trendChart"></div>
+      <div class="insights" id="insights"></div>
+    </div>
+  </section>
+
+  <section class="panel glass" aria-labelledby="u6Title">
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow">Singapore labour market</div>
+        <h2 id="u6Title">Broad underutilisation rate (U-6 style)</h2>
+        <p class="hint">Residents who are unemployed, plus part-timers who want more hours but can't get them. Singapore doesn't publish an official U-6, so this adds MOM's two June survey rates together.</p>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--coral)"></i>Unemployment</span>
+        <span><i style="background:var(--sky)"></i>Time-related underemployment</span>
+      </div>
+    </div>
+    <div class="season">
+      <div class="chart" id="u6Chart"></div>
+      <div class="insights" id="u6Insights"></div>
+    </div>
+    <p class="small src">Sources: <a href="https://data.gov.sg/datasets/d_285a079d823a1cc22dffb9cac325f81a/view" target="_blank" rel="noopener">SingStat/MOM resident unemployment rate, end-June, seasonally adjusted</a> · MOM Labour Force in Singapore advance releases <a href="https://stats.mom.gov.sg/iMAS_PdfLibrary/mrsd-Labour-Force-in-Singapore-Advance-Release-2018.pdf" target="_blank" rel="noopener">2018</a>, <a href="https://www.mom.gov.sg/newsroom/press-releases/2020/1203-labour-force-in-singapore-advance-release-2020" target="_blank" rel="noopener">2020</a>, <a href="https://www.mom.gov.sg/newsroom/press-releases/2021/1201-labour-force-in-singapore-advance-release-2021" target="_blank" rel="noopener">2021</a>, <a href="https://www.mom.gov.sg/newsroom/press-releases/2023/1130-labour-force-in-singapore-advance-release-2023" target="_blank" rel="noopener">2023</a>, <a href="https://www.mom.gov.sg/newsroom/press-releases/2025/1128-labour-force-in-singapore-advance-release-2025" target="_blank" rel="noopener">2025</a>. The two rates use slightly different bases (labour force vs employed), so the total is an approximation. *2026 shows unemployment only; underemployment is not yet published.</p>
+  </section>
+
+  </main>
+
+  <main id="sectorsView" class="view" hidden>
+  <section class="panel glass" aria-labelledby="secTitle">
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow">Sectors</div>
+        <h2 id="secTitle">Openings and pay by sector</h2>
+        <p class="hint">Bar shows the middle half of advertised pay (25th–75th percentile); the tick is the median. Pick a sector to see its roles.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="secSearch" type="search" placeholder="Search sectors or roles" aria-label="Search sectors or roles">
+        <select id="secSort" aria-label="Sort sectors">
+          <option value="openings">Most openings</option>
+          <option value="median">Highest median pay</option>
+          <option value="postings">Most postings</option>
+        </select>
+      </div>
+    </div>
+    <div class="sectors" id="sectors"></div>
+  </section>
+
+  </main>
+
+  <main id="sectorView" class="view" hidden>
+  <section class="panel glass" id="detail" aria-live="polite"></section>
+  </main>
+
+  <main id="aboutView" class="view" hidden>
+    <section class="about-hero">
+      <div class="tagline">For the unemployed, by an unemployed.</div>
+      <h1>I lost my job. So I started counting everyone else's.</h1>
+      <p class="lede">Openings SG is what one engineer built to make sense of the job hunt. Now it's yours, free.</p>
+    </section>
+
+    <article class="story-short glass">
+      <p class="q1">Who's actually hiring? What should I ask for? Is now even a good time to apply?</p>
+      <div class="prose">
+        <p>After the layoff, I asked myself those three questions every morning while scrolling MyCareersFuture. Nobody could answer them for me.</p>
+        <p>The answers were public, just buried across thousands of listings. So I wrote a script to count them. Within weeks I could see which roles had openings, what they really paid, and that hiring surges in the first quarter and stalls in December.</p>
+        <p>It changed how I searched. I hope it changes yours. No ads, no sign-up. I'm still looking too.</p>
+        <p class="sig">An engineer between jobs, Singapore</p>
+      </div>
+    </article>
+
+    <section class="about-grid">
+      <div class="kopi glass" id="kopi" aria-labelledby="kopiTitle">
+        <div class="kopi-head">
+          <svg class="cup" viewBox="0 0 120 120" aria-hidden="true">
+            <g fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round">
+              <path class="steam" d="M46 34c-6-8 6-12 0-20"/><path class="steam" d="M60 34c-6-8 6-12 0-20"/><path class="steam" d="M74 34c-6-8 6-12 0-20"/>
+            </g>
+            <path d="M28 44h64l-6 46a10 10 0 0 1-10 9H44a10 10 0 0 1-10-9z" fill="var(--accent)"/>
+            <path d="M92 52h6a10 10 0 0 1 0 20h-8" fill="none" stroke="var(--accent)" stroke-width="6"/>
+            <rect x="22" y="40" width="76" height="8" rx="4" fill="var(--coral)"/>
+          </svg>
+          <div>
+            <div class="eyebrow">Support the project</div>
+            <h2 id="kopiTitle">Buy me a kopi</h2>
+            <p class="small">If this helped your search, a kopi keeps the scraper running. Can't spare one? Sharing the site with a friend who's job hunting helps just as much.</p>
+          </div>
+        </div>
+        <div class="tiers" role="radiogroup" aria-label="Choose a treat">
+          <button class="tier" type="button" role="radio" aria-checked="false" data-amt="3" data-label="a kopi"><span class="ico" aria-hidden="true">☕</span><span><span class="t">One kopi</span><br><span class="d">An evening of fixing bugs</span></span><span class="amt">S$3</span></button>
+          <button class="tier" type="button" role="radio" aria-checked="true" data-amt="6" data-label="kopi and kaya toast"><span class="ico" aria-hidden="true">🍞</span><span><span class="t">Kopi + kaya toast</span><br><span class="d">Keeps the daily data fresh</span></span><span class="amt">S$6</span></button>
+          <button class="tier" type="button" role="radio" aria-checked="false" data-amt="15" data-label="a week of kopi"><span class="ico" aria-hidden="true">🗓️</span><span><span class="t">A week of kopi</span><br><span class="d">Funds the next feature</span></span><span class="amt">S$15</span></button>
+        </div>
+        <div class="give">
+          <a id="bmcBtn" class="btn primary" href="#kopi" target="_blank" rel="noopener">Buy me kopi and kaya toast · S$6</a>
+          <p class="small" id="bmcNote">You'll confirm the amount on Buy Me a Coffee.</p>
+          <div class="paynow" id="paynowBox" hidden>
+            <span><strong>PayNow</strong></span><code id="paynowId"></code>
+            <button class="btn" type="button" id="copyPaynow">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="enq glass" id="business" aria-labelledby="enqTitle">
+        <div class="eyebrow">For business enquiries</div>
+        <h2 id="enqTitle">Work with me</h2>
+        <p class="small">I turn messy job and salary data into answers people can act on. Get in touch about:</p>
+        <ul class="enq-list">
+          <li><strong>Custom reports</strong><span>Salary benchmarks and hiring trends for your sector or roles</span></li>
+          <li><strong>Data and partnerships</strong><span>Career services, schools and job-seeker programmes</span></li>
+          <li><strong>Sponsorship</strong><span>Help keep Openings SG free for job seekers</span></li>
+          <li><strong>Hiring me</strong><span>Engineering and analytics roles, full-time or contract</span></li>
+        </ul>
+        <div class="paynow" id="emailBox">
+          <span><strong>Email</strong></span><code id="emailId"></code>
+          <button class="btn" type="button" id="copyEmail">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="small about-note">Salaries on Openings SG are what employers advertise, not final pay. Use them as a starting point. <a href="#overview">Open the dashboard →</a></p>
+  </main>
+
+  <footer class="foot glass">
+    Salaries are monthly SGD, taken as the midpoint of each posting's advertised range. "Openings" counts vacancies, so one posting can hold several.
+    The sample dataset is generated for demonstration and is not real MyCareersFuture data. To use live data, run <code>python3 mcf_scraper.py</code> (daily, to build history) and load the resulting <code>openings.json</code> with "Load scraped data".
+  </footer>
+</div>
+
+<script>
+(() => {
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => n == null || isNaN(n) ? '–' : 'S$' + Math.round(n).toLocaleString('en-SG');
+const kfmt = n => n == null ? '–' : (n >= 1000 ? 'S$' + (n/1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/,'') + 'k' : 'S$' + Math.round(n));
+const int = n => Math.round(n).toLocaleString('en-SG');
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const sorted = a => a.slice().sort((x,y) => x-y);
+const q = (s, p) => { if (!s.length) return null; const i = (s.length-1)*p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi]-s[lo])*(i-lo); };
+const mean = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : null;
+
+/* ---------- sample data (seeded, deterministic) ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function makeSample(){
+  const rnd = mulberry32(20261013);
+  const gauss = () => { let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+  const pick = arr => { let r = rnd()*arr.reduce((s,a)=>s+a[1],0); for (const a of arr) { if ((r -= a[1]) <= 0) return a[0]; } return arr[arr.length-1][0]; };
+  // [role, pay factor, popularity]
+  const S = [
+    ['Information Technology',.16,[4500,9000],{2:1.12,8:1.16},[['Software Engineer',1,5],['Data Analyst',.82,3],['DevOps Engineer',1.05,2],['IT Support Engineer',.52,3],['Cloud Architect',1.45,1],['Cybersecurity Analyst',1.08,2],['Product Manager',1.28,1.5],['Data Scientist',1.18,1.5]]],
+    ['Banking and Finance',.11,[4200,9500],{1:1.16,2:1.22,11:.85},[['Relationship Manager',1.18,3],['Compliance Analyst',.98,3],['Credit Analyst',.92,2],['Operations Executive',.58,3],['Quantitative Analyst',1.5,.8],['Fund Accountant',.78,2]]],
+    ['Healthcare / Pharmaceutical',.11,[3200,7000],{6:1.08},[['Staff Nurse',.78,5],['Pharmacist',1.12,2],['Clinical Research Associate',1.02,1.5],['Healthcare Assistant',.42,3],['Radiographer',.95,1],['Physiotherapist',.96,1.2]]],
+    ['Engineering',.10,[3500,7500],{3:1.08,8:1.06},[['Mechanical Engineer',.9,3],['Electrical Engineer',.95,3],['Process Engineer',1,2],['Maintenance Technician',.55,3],['Project Engineer',.95,2.5],['QA Engineer',.85,1.5]]],
+    ['Sales / Retail',.08,[2400,5500],{5:1.15,10:1.38,11:1.25},[['Sales Executive',.8,5],['Retail Assistant',.45,4],['Business Development Manager',1.4,2],['Store Manager',.95,1.5],['Account Manager',1.1,2]]],
+    ['Accounting / Auditing / Taxation',.08,[3200,7000],{0:1.08,2:1.12},[['Accountant',.85,4],['Audit Associate',.74,3],['Tax Manager',1.45,1],['Accounts Assistant',.5,3],['Financial Controller',1.7,.7]]],
+    ['Logistics / Supply Chain',.08,[2800,6000],{8:1.12,9:1.15},[['Warehouse Supervisor',.7,3],['Procurement Executive',.85,3],['Supply Chain Analyst',1,2],['Delivery Driver',.5,4],['Freight Forwarding Executive',.8,2]]],
+    ['Building and Construction',.07,[3000,6500],{3:1.12,8:1.1},[['Site Supervisor',.8,3],['Quantity Surveyor',1,2.5],['Safety Coordinator',.7,2.5],['Project Manager',1.5,1.5],['Draftsman',.7,1.5]]],
+    ['F&B',.07,[2000,4500],{5:1.1,10:1.25,11:1.32},[['Service Crew',.5,5],['Cook',.72,3],['Restaurant Manager',1.3,1.5],['Barista',.55,2],['Kitchen Assistant',.45,3]]],
+    ['Education and Training',.06,[3000,6000],{0:1.18,2:.82,10:1.22,11:1.3},[['Preschool Teacher',.72,4],['Tutor',.66,3],['Corporate Trainer',.98,1.5],['Curriculum Developer',1,1.2],['Lecturer',1.42,1]]],
+    ['Admin / Secretarial',.04,[2400,4800],{},[['Admin Executive',.8,5],['Receptionist',.65,2.5],['Executive Assistant',1.25,2],['HR Executive',1,2.5]]],
+    ['Hospitality',.04,[2200,4800],{5:1.2,6:1.15,10:1.15,11:1.18},[['Front Office Agent',.7,3],['Housekeeping Attendant',.55,3],['Guest Relations Officer',.8,2],['Hotel Duty Manager',1.25,1]]],
+  ];
+  const GLOBAL = [1.28,1.15,1.32,1.05,.95,.9,1.08,1.04,1,1,.9,.72]; // by calendar month
+  const SEN = [['Entry',.2,.8],['Executive',.35,1],['Senior Executive',.22,1.15],['Manager',.17,1.4],['Senior Management',.06,1.9]];
+  const shifty = ['Sales / Retail','F&B','Hospitality'];
+  // Invented company names for the sample only; real company names come from scraped data.
+  const SYL = ['Ar','Bel','Cor','Dav','El','Fen','Gal','Har','Ish','Jor','Kel','Lum','Mar','Nov','Or','Pel','Quin','Ros','Sel','Tam','Ul','Ver','Wyn','Zan'];
+  const END = ['ara','ex','ion','ora','is','en','ium','ova','ent','yx','eth','ano'];
+  const SUF = { 'Information Technology':['Technologies','Labs','Systems','Digital'], 'Banking and Finance':['Capital','Partners','Wealth','Financial'], 'Healthcare / Pharmaceutical':['Medical','Health','Clinic Group','Pharma'], 'Engineering':['Engineering','Industries','Technical'], 'Sales / Retail':['Retail','Trading','Stores'], 'Accounting / Auditing / Taxation':['Accounting','Advisory','Assurance'], 'Logistics / Supply Chain':['Logistics','Freight','Supply'], 'Building and Construction':['Builders','Construction','Contractors'], 'F&B':['Kitchen','Eatery','F&B Group','Cafe'], 'Education and Training':['Academy','Learning','Education Centre'], 'Admin / Secretarial':['Services','Corporate','Holdings'], 'Hospitality':['Hotels','Hospitality','Resorts'] };
+  const used = new Set();
+  const companyName = sector => { let n; do { n = SYL[Math.floor(rnd()*SYL.length)] + END[Math.floor(rnd()*END.length)]; } while (used.has(n)); used.add(n); const sf = SUF[sector] || ['Holdings']; return `${n} ${sf[Math.floor(rnd()*sf.length)]} Pte Ltd`; };
+  const COS = {};
+  for (const [name] of S) COS[name] = Array.from({ length: 10 + Math.floor(rnd()*6) }, () => [companyName(name), .82 + rnd()*.4, .4 + rnd()*1.6]); // [name, pay factor, hiring weight]
+  const out = []; let id = 0; const TOTAL = 2600;
+  for (let k = 0; k < 12; k++) {
+    const y = k < 3 ? 2025 : 2026, m = (9 + k) % 12; // Oct 2025 .. Sep 2026
+    for (const [name, share, base, boost, roles] of S) {
+      const n = Math.max(1, Math.round(TOTAL/12 * share * GLOBAL[m] * (boost[m] || 1) * (1 + gauss()*.06)));
+      for (let i = 0; i < n; i++) {
+        const role = pick(roles.map(r => [r, r[2]]));
+        const sIdx = Math.floor(pick(SEN.map((s,j) => [j, s[1]])));
+        const sen = SEN[sIdx];
+        const co = pick(COS[name].map(c => [c, c[2]]));
+        const center = (base[0]+base[1])/2 * role[1] * sen[2] * co[1] * Math.exp(gauss()*.12);
+        const w = .1 + rnd()*.16;
+        const prefix = sen[0] === 'Senior Executive' && rnd() < .4 ? 'Senior ' : '';
+        const et = pick(shifty.includes(name)
+          ? [['Full Time',.45],['Part Time',.22],['Permanent',.15],['Contract',.1],['Temporary',.08]]
+          : [['Full Time',.55],['Permanent',.22],['Contract',.17],['Part Time',.04],['Temporary',.02]]);
+        out.push({
+          id: 's' + (++id), title: prefix + role[0], sector: name, company: co[0], url: null,
+          salary_min: Math.round(center*(1-w)/100)*100, salary_max: Math.round(center*(1+w)/100)*100,
+          vacancies: pick([[1,.62],[2,.18],[3,.09],[4,.05],[5,.06]]),
+          posted: new Date(Date.UTC(y, m, 1 + Math.floor(rnd()*28))),
+          employment_type: et, seniority: sen[0]
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/* ---------- loading real data ---------- */
+const num = v => { const n = typeof v === 'string' ? parseFloat(v.replace(/[^0-9.]/g,'')) : v; return Number.isFinite(n) && n > 0 ? n : null; };
+function fromRaw(r){
+  if (!r || typeof r !== 'object') return null;
+  const first = (a,k) => Array.isArray(a) && a[0] ? a[0][k] : undefined;
+  const title = r.title;
+  const ds = r.posted_date ?? r.postedDate ?? r.posted ?? r.metadata?.newPostingDate ?? r.metadata?.originalPostingDate;
+  const posted = ds ? new Date(String(ds).slice(0,10) + 'T00:00:00Z') : null;
+  if (!title || !posted || isNaN(posted)) return null;
+  let smin = num(r.salary_min ?? r.salaryMin ?? r.salary?.minimum), smax = num(r.salary_max ?? r.salaryMax ?? r.salary?.maximum);
+  const st = String(r.salary?.type?.salaryType || '').toLowerCase();
+  if (st.startsWith('annual')) { smin = smin && smin/12; smax = smax && smax/12; }
+  if (st.startsWith('hour')) { smin = smax = null; }
+  return {
+    id: r.id ?? r.uuid, title: String(title),
+    company: r.company ?? r.postedCompany?.name ?? 'Company not stated',
+    url: typeof (r.url ?? r.metadata?.jobDetailsUrl) === 'string' && /^https:\/\//.test(r.url ?? r.metadata?.jobDetailsUrl) ? (r.url ?? r.metadata.jobDetailsUrl) : null,
+    sector: r.sector ?? r.category ?? first(r.categories,'category') ?? 'Others',
+    salary_min: smin, salary_max: smax,
+    vacancies: num(r.vacancies ?? r.numberOfVacancies) || 1,
+    posted,
+    employment_type: r.employment_type ?? r.employmentType ?? first(r.employmentTypes,'employmentType') ?? 'Not stated',
+    seniority: r.seniority ?? first(r.positionLevels,'position') ?? 'Not stated'
+  };
+}
+const STRIP = /\b(senior|snr|sr|junior|jr|lead|principal|head of|entry[- ]level|fresh graduates?|urgent(ly)?|immediate|hiring|\d+\s*(months?|yrs?|years?)( contract)?)\b\.?/gi;
+function roleOf(t){
+  let s = String(t).replace(/\(.*?\)|\[.*?\]/g,' ').split(/\s[-–|\/]\s|,|\s@\s/)[0];
+  s = s.replace(STRIP,' ').replace(/[#*!]/g,'').replace(/\s+/g,' ').trim();
+  if (!s) return 'Other';
+  return s.split(' ').map(w => /^[A-Z0-9&]{2,4}$/.test(w) ? w : w[0].toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
+
+/* ---------- state + aggregation ---------- */
+const state = { data: [], source: 'sample', trendSector: 'all', sort: 'openings', query: '', selected: null };
+let agg = null;
+
+function aggregate(data){
+  const sectors = new Map();
+  const allMids = [];
+  for (const r of data) {
+    const mid = r.salary_min && r.salary_max ? (r.salary_min + r.salary_max)/2 : (r.salary_min || r.salary_max || null);
+    r.mid = mid; r.role = r.role || roleOf(r.title);
+    if (mid) allMids.push(mid);
+    let s = sectors.get(r.sector);
+    if (!s) sectors.set(r.sector, s = { name: r.sector, postings: 0, openings: 0, mids: [], mins: [], maxs: [], roles: new Map(), emp: new Map(), sen: new Map(), records: [] });
+    s.postings++; s.openings += r.vacancies; s.records.push(r);
+    if (mid) s.mids.push(mid);
+    if (r.salary_min) s.mins.push(r.salary_min);
+    if (r.salary_max) s.maxs.push(r.salary_max);
+    s.emp.set(r.employment_type, (s.emp.get(r.employment_type)||0) + r.vacancies);
+    s.sen.set(r.seniority, (s.sen.get(r.seniority)||0) + r.vacancies);
+    let ro = s.roles.get(r.role);
+    if (!ro) s.roles.set(r.role, ro = { name: r.role, postings: 0, openings: 0, mids: [], recs: [] });
+    ro.postings++; ro.openings += r.vacancies; ro.recs.push(r); if (mid) ro.mids.push(mid);
+  }
+  for (const s of sectors.values()) {
+    const m = sorted(s.mids);
+    Object.assign(s, { median: q(m,.5), p25: q(m,.25), p75: q(m,.75), mean: mean(m), lo: Math.min(...s.mins), hi: Math.max(...s.maxs) });
+    s.roleList = [...s.roles.values()].map(ro => { const rm = sorted(ro.mids); return Object.assign(ro, { median: q(rm,.5), p25: q(rm,.25), p75: q(rm,.75) }); })
+      .sort((a,b) => b.openings - a.openings);
+  }
+  const am = sorted(allMids);
+  return { sectors: [...sectors.values()], median: q(am,.5), postings: data.length, openings: data.reduce((s,r)=>s+r.vacancies,0) };
+}
+
+function buckets(records){
+  if (!records.length) return { mode: 'month', list: [] };
+  const times = records.map(r => r.posted.getTime());
+  const min = Math.min(...times), max = Math.max(...times);
+  const weekly = (max - min) < 90*864e5;
+  const map = new Map();
+  const keyOf = d => {
+    if (!weekly) return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+    const day = (d.getUTCDay() + 6) % 7; return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day);
+  };
+  // fill gaps so the line is continuous
+  for (let t = keyOf(new Date(min)); t <= max; ) {
+    map.set(t, { t, openings: 0, postings: 0 });
+    const d = new Date(t); t = weekly ? t + 7*864e5 : Date.UTC(d.getUTCFullYear(), d.getUTCMonth()+1, 1);
+  }
+  for (const r of records) { const b = map.get(keyOf(r.posted)); if (b) { b.openings += r.vacancies; b.postings++; } }
+  const list = [...map.values()].sort((a,b) => a.t - b.t);
+  list.forEach(b => { const d = new Date(b.t); b.label = weekly ? `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}` : MONTHS[d.getUTCMonth()] + (d.getUTCMonth() === 0 || b === list[0] ? ` ’${String(d.getUTCFullYear()).slice(2)}` : ''); b.long = weekly ? `Week of ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}` : `${MONTHS_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`; b.month = d.getUTCMonth(); });
+  return { mode: weekly ? 'week' : 'month', list };
+}
+
+/* ---------- render: KPIs ---------- */
+function renderKPIs(){
+  const top = agg.sectors.slice().sort((a,b) => b.openings - a.openings)[0];
+  $('#kpis').innerHTML = [
+    ['Open positions', int(agg.openings), 'vacancies across all postings'],
+    ['Job postings', int(agg.postings), `${agg.sectors.length} sectors`],
+    ['Median monthly pay', money(agg.median), 'midpoint of advertised range'],
+    ['Most openings', top ? esc(top.name) : '–', top ? `${int(top.openings)} openings` : '', true]
+  ].map(([l,v,s,small]) => `<div class="kpi glass${small?' small':''}"><span class="label">${l}</span><span class="val">${v}</span><span class="sub">${s}</span></div>`).join('');
+}
+
+/* ---------- render: trend chart ---------- */
+function niceMax(v){ if (v <= 0) return 10; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v/p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+
+function renderTrend(){
+  const recs = state.trendSector === 'all' ? state.data : state.data.filter(r => r.sector === state.trendSector);
+  const { mode, list } = buckets(recs);
+  const host = $('#trendChart');
+  const W = Math.max(300, host.clientWidth || 640), H = W < 500 ? 220 : 260;
+  const m = { t: 26, r: 14, b: 28, l: 40 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  if (list.length < 2) { host.innerHTML = `<p class="hint">Not enough dated postings to draw a trend yet. Run the scraper over a few weeks to build history.</p>`; $('#insights').innerHTML=''; return; }
+  const vals = list.map(b => b.openings);
+  const ymax = niceMax(Math.max(...vals) * 1.08);
+  const x = i => m.l + (list.length === 1 ? iw/2 : i * iw/(list.length-1));
+  const y = v => m.t + ih - v/ymax*ih;
+  const avg = mean(vals);
+  const peakI = vals.indexOf(Math.max(...vals));
+  const pts = list.map((b,i) => [x(i), y(b.openings)]);
+  const line = pts.map((p,i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('');
+  const area = line + `L${x(list.length-1)},${m.t+ih}L${x(0)},${m.t+ih}Z`;
+  const ticks = [0,.25,.5,.75,1].map(f => f*ymax);
+  const every = Math.ceil(list.length / (W < 500 ? 6 : 12));
+  host.innerHTML = `
+  <svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Openings per ${mode}">
+    <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>
+    ${ticks.map(t => `<line x1="${m.l}" x2="${W-m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${m.l-8}" y="${y(t)+3.5}" text-anchor="end">${int(t)}</text>`).join('')}
+    <path d="${area}" fill="url(#ag)"/>
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="${m.l}" x2="${W-m.r}" y1="${y(avg)}" y2="${y(avg)}" stroke="var(--muted)" stroke-dasharray="4 4" opacity=".7"/>
+    <text x="${W-m.r}" y="${y(avg)-6}" text-anchor="end">avg ${int(avg)}</text>
+    ${list.map((b,i) => i % every === 0 || i === list.length-1 ? `<text x="${x(i)}" y="${H-8}" text-anchor="middle">${esc(b.label)}</text>` : '').join('')}
+    ${pts.map((p,i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i===peakI?5.5:2.6}" fill="${i===peakI?'var(--coral)':'var(--accent)'}" stroke="var(--bg)" stroke-width="${i===peakI?2:0}"/>`).join('')}
+    <text x="${pts[peakI][0]}" y="${pts[peakI][1]-12}" text-anchor="middle" style="fill:var(--coral);font-weight:500">peak</text>
+    <line id="hoverLine" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="var(--ink)" opacity="0"/>
+    <rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" id="hit"/>
+  </svg><div class="tip" hidden></div>`;
+  const svg = host.querySelector('svg'), tip = host.querySelector('.tip'), hl = host.querySelector('#hoverLine');
+  const move = e => {
+    const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * W / r.width;
+    const i = Math.max(0, Math.min(list.length-1, Math.round((px - m.l) / (iw/(list.length-1)))));
+    const b = list[i];
+    hl.setAttribute('x1', x(i)); hl.setAttribute('x2', x(i)); hl.setAttribute('opacity', .25);
+    tip.hidden = false; tip.style.left = (x(i) * r.width / W) + 'px'; tip.style.top = (y(b.openings) * r.height / H) + 'px';
+    tip.innerHTML = `${esc(b.long)}<br><b>${int(b.openings)}</b> openings · <b>${int(b.postings)}</b> postings`;
+  };
+  const hit = host.querySelector('#hit');
+  hit.addEventListener('pointermove', move); hit.addEventListener('pointerdown', move);
+  hit.addEventListener('pointerleave', () => { tip.hidden = true; hl.setAttribute('opacity', 0); });
+
+  // insights
+  const peak = list[peakI], last = list[list.length-1], prev = list[list.length-2];
+  const chg = prev.openings ? (last.openings - prev.openings) / prev.openings * 100 : 0;
+  let best = '';
+  if (mode === 'month') {
+    const byM = new Map(); list.forEach(b => { const a = byM.get(b.month) || []; a.push(b.openings); byM.set(b.month, a); });
+    const ranked = [...byM.entries()].map(([mo, a]) => [mo, mean(a)]).sort((a,b) => b[1] - a[1]).slice(0,3);
+    best = `<div class="insight"><div class="label">Best months to apply</div><div class="chips">${ranked.map(([mo]) => `<span class="chip">${MONTHS_LONG[mo]}</span>`).join('')}</div><div class="note" style="margin-top:6px">Months with the most new openings.</div></div>`;
+  }
+  $('#insights').innerHTML = `
+    <div class="insight"><div class="label">Peak ${mode}</div><div class="big">${esc(peak.long)}</div><div class="note">${int(peak.openings)} openings, ${Math.round((peak.openings/avg-1)*100)}% above the ${mode}ly average</div></div>
+    <div class="insight"><div class="label">Latest ${mode}</div><div class="big">${int(last.openings)} <span class="${chg>=0?'up':'down'}" style="font-size:15px">${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(0)}%</span></div><div class="note">${esc(last.long)} vs ${esc(prev.long)}</div></div>
+    ${best}`;
+}
+
+/* ---------- render: sectors ---------- */
+function rangeBar(p25, med, p75, scale){
+  if (p25 == null) return `<div class="range"></div>`;
+  const pc = v => Math.max(0, Math.min(100, v/scale*100)).toFixed(1);
+  return `<div class="range" title="${money(p25)} – ${money(p75)}, median ${money(med)}"><span style="left:${pc(p25)}%;width:${(pc(p75)-pc(p25)).toFixed(1)}%"></span><i style="left:${pc(med)}%"></i></div>`;
+}
+function renderSectors(){
+  const qy = state.query.trim().toLowerCase();
+  let list = agg.sectors.filter(s => !qy || s.name.toLowerCase().includes(qy) || s.roleList.some(r => r.name.toLowerCase().includes(qy)));
+  const key = state.sort;
+  list.sort((a,b) => (b[key] ?? 0) - (a[key] ?? 0));
+  const scale = niceMax(Math.max(...agg.sectors.map(s => s.p75 || 0)) * 1.05);
+  $('#sectors').innerHTML = list.length ? list.map(s => {
+    const match = qy && !s.name.toLowerCase().includes(qy) ? s.roleList.find(r => r.name.toLowerCase().includes(qy)) : null;
+    return `<button class="sector" type="button" data-name="${esc(s.name)}" aria-pressed="${s.name === state.selected}">
+      <div class="sec-top"><span class="sec-name">${esc(s.name)}</span><span class="sec-open">${int(s.openings)}<small>openings</small></span></div>
+      <div class="sec-pay"><span>Median pay</span><strong>${money(s.median)}</strong></div>
+      ${rangeBar(s.p25, s.median, s.p75, scale)}
+      <div class="sec-foot">${match ? 'Matches · ' + esc(match.name) : 'Top role · ' + esc(s.roleList[0]?.name || '–')}</div>
+    </button>`; }).join('') : `<p class="hint">No sectors or roles match “${esc(state.query)}”.</p>`;
+}
+
+/* ---------- render: sector detail ---------- */
+function histogram(mids){
+  if (!mids.length) return '<p class="hint">No salary data for this sector.</p>';
+  const host = $('#detail');
+  const W = Math.max(280, Math.min(560, (host.clientWidth - 60) * (window.innerWidth > 980 ? .44 : 1))), H = 190, m = { t: 14, r: 8, b: 26, l: 34 };
+  const top = Math.min(20000, niceMax(q(sorted(mids), .97)));
+  const step = top <= 8000 ? 500 : 1000;
+  const n = Math.ceil(top/step);
+  const bins = new Array(n).fill(0);
+  mids.forEach(v => bins[Math.min(n-1, Math.floor(v/step))]++);
+  const ymax = niceMax(Math.max(...bins));
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw/n;
+  const med = q(sorted(mids), .5);
+  const labEvery = Math.ceil(n / (W < 400 ? 5 : 8));
+  return `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Salary distribution">
+    ${[0,.5,1].map(f => `<line x1="${m.l}" x2="${W-m.r}" y1="${m.t+ih-f*ih}" y2="${m.t+ih-f*ih}" stroke="var(--line)"/><text x="${m.l-6}" y="${m.t+ih-f*ih+3.5}" text-anchor="end">${int(f*ymax)}</text>`).join('')}
+    ${bins.map((c,i) => `<rect x="${m.l+i*bw+1.5}" y="${m.t+ih-c/ymax*ih}" width="${Math.max(1,bw-3)}" height="${c/ymax*ih}" rx="3" fill="var(--accent)" opacity="${(i*step <= med && med < (i+1)*step) ? 1 : .55}"><title>${kfmt(i*step)}–${kfmt((i+1)*step)}${i===n-1?'+':''}: ${c} postings</title></rect>`).join('')}
+    ${bins.map((c,i) => i % labEvery === 0 ? `<text x="${m.l+i*bw}" y="${H-8}" text-anchor="${i===0?'start':'middle'}">${kfmt(i*step)}</text>` : '').join('')}
+    <text x="${W-m.r}" y="${H-8}" text-anchor="end">${kfmt(top)}+</text>
+  </svg>`;
+}
+function bars(map, total){
+  return `<div class="bars">${[...map.entries()].sort((a,b) => b[1]-a[1]).slice(0,6).map(([k,v]) => {
+    const p = v/total*100;
+    return `<div class="bar-row"><span>${esc(k)}</span><div class="track"><div class="fill" style="width:${p.toFixed(1)}%"></div></div><span class="pct">${p.toFixed(0)}%</span></div>`; }).join('')}</div>`;
+}
+function renderDetail(){
+  const s = agg.sectors.find(x => x.name === state.selected);
+  const el = $('#detail');
+  if (!s) { el.innerHTML = '<p class="hint">Pick a sector on the <a href="#sectors">Sectors page</a> to see its roles and salaries.</p>'; return; }
+  const peak = buckets(s.records).list.reduce((a,b) => b.openings > (a?.openings ?? -1) ? b : a, null);
+  const scale = niceMax(Math.max(...s.roleList.map(r => r.p75 || 0)) * 1.05);
+  const vs = s.median && agg.median ? Math.round((s.median / agg.median - 1) * 100) : null;
+  const rank = agg.sectors.slice().sort((a,b) => b.openings - a.openings).indexOf(s) + 1;
+  el.innerHTML = `
+    <a class="back" href="#sectors">← All sectors</a>
+    <div class="detail-head">
+      <div><div class="eyebrow">Sector deep-dive</div><h2 class="dd-title">${esc(s.name)}</h2>
+        <p class="hint">${int(s.openings)} openings across ${int(s.postings)} postings and ${s.roleList.length} roles${peak ? ` · busiest: ${esc(peak.long)}` : ''}</p>
+        <div class="dd-chips"><span class="chip">#${rank} of ${agg.sectors.length} for openings</span>${vs != null ? `<span class="chip ${vs < 0 ? 'neg' : ''}">Median ${vs >= 0 ? '+' : ''}${vs}% vs all sectors</span>` : ''}</div></div>
+      <div class="dd-actions">
+        <select id="sectorPick" aria-label="Switch sector">${agg.sectors.map(x => x.name).sort().map(n => `<option value="${esc(n)}"${n === s.name ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>
+        <button class="btn" type="button" id="trendThis">Hiring season for this sector</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat key"><div class="label">Median</div><div class="v">${money(s.median)}</div></div>
+      <div class="stat"><div class="label">Mean</div><div class="v">${money(s.mean)}</div></div>
+      <div class="stat"><div class="label">25th percentile</div><div class="v">${money(s.p25)}</div></div>
+      <div class="stat"><div class="label">75th percentile</div><div class="v">${money(s.p75)}</div></div>
+      <div class="stat"><div class="label">Lowest advertised</div><div class="v">${money(isFinite(s.lo)?s.lo:null)}</div></div>
+      <div class="stat"><div class="label">Highest advertised</div><div class="v">${money(isFinite(s.hi)?s.hi:null)}</div></div>
+    </div>
+    <div class="detail-grid">
+      <div class="col">
+        <div><h3>Salary distribution</h3><div class="chart">${histogram(s.mids)}</div><p class="hint">Postings by monthly pay midpoint. The bright bar holds the median.</p></div>
+        <div class="split">
+          <div><h3>Employment type</h3>${bars(s.emp, s.openings)}</div>
+          <div><h3>Seniority</h3>${bars(s.sen, s.openings)}</div>
+        </div>
+      </div>
+      <div class="col">
+        <div><h3>Roles</h3>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Role</th><th class="num">Openings</th><th class="num">Postings</th><th class="num">Median</th><th>Middle half</th></tr></thead>
+            <tbody>${s.roleList.slice(0, state.allRoles ? 999 : 15).map(r => {
+              const open = state.openRole === r.name;
+              return `<tr class="role-row${open ? ' open' : ''}"><td class="role"><button type="button" class="role-btn" data-role="${esc(r.name)}" aria-expanded="${open}"><span class="caret" aria-hidden="true">›</span>${esc(r.name)}</button></td><td class="num">${int(r.openings)}</td><td class="num">${int(r.postings)}</td><td class="num">${money(r.median)}</td><td class="rng">${rangeBar(r.p25, r.median, r.p75, scale)}</td></tr>
+              ${open ? `<tr class="offers-row"><td colspan="5">${offersList(r)}</td></tr>` : ''}`; }).join('')}</tbody>
+          </table></div>
+          <p class="hint">Tap a role to see which companies are hiring and what each one offers.</p>
+          ${s.roleList.length > 15 && !state.allRoles ? `<button class="btn" type="button" id="moreRoles">Show all ${s.roleList.length} roles</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  $('#trendThis').onclick = () => { state.trendSector = s.name; $('#trendSector').value = s.name; location.hash = 'season'; };
+  $('#sectorPick').onchange = e => { state.selected = e.target.value; state.openRole = null; state.allRoles = false; renderSectors(); renderDetail(); window.scrollTo(0, 0); };
+  const more = $('#moreRoles'); if (more) more.onclick = () => { state.allRoles = true; renderDetail(); };
+}
+
+/* companies hiring for one role, grouped, best top-of-range first */
+function offersList(role){
+  const by = new Map();
+  for (const r of role.recs) {
+    let c = by.get(r.company);
+    if (!c) by.set(r.company, c = { name: r.company, openings: 0, postings: 0, lo: null, hi: null, types: new Set(), levels: new Set(), latest: null, url: null });
+    c.openings += r.vacancies; c.postings++;
+    if (r.salary_min) c.lo = c.lo == null ? r.salary_min : Math.min(c.lo, r.salary_min);
+    if (r.salary_max) c.hi = c.hi == null ? r.salary_max : Math.max(c.hi, r.salary_max);
+    if (r.employment_type) c.types.add(r.employment_type);
+    if (r.seniority) c.levels.add(r.seniority);
+    if (!c.latest || r.posted > c.latest) { c.latest = r.posted; c.url = r.url || c.url; }
+  }
+  const list = [...by.values()].sort((a,b) => (b.hi ?? -1) - (a.hi ?? -1) || b.openings - a.openings);
+  const scale = niceMax(Math.max(...list.map(c => c.hi || 0)) * 1.05);
+  const expanded = state.allCos === role.name, shown = expanded ? list : list.slice(0, 12);
+  const fmtDate = d => `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  const pc = v => (v / scale * 100).toFixed(1);
+  return `<div class="offers">
+    <div class="offers-head"><strong>${list.length} ${list.length === 1 ? 'company' : 'companies'} hiring ${esc(role.name)}</strong><span>Sorted by highest pay offered</span></div>
+    <ul class="offer-list">${shown.map(c => `<li>
+      <div class="oi-top"><span class="oi-co">${esc(c.name)}</span><span class="oi-pay">${c.lo || c.hi ? `${money(c.lo ?? c.hi)} – ${money(c.hi ?? c.lo)}` : 'Salary not stated'}</span></div>
+      ${c.lo || c.hi ? `<div class="range"><span style="left:${pc(c.lo ?? c.hi)}%;width:${Math.max(1, pc(c.hi ?? c.lo) - pc(c.lo ?? c.hi)).toFixed(1)}%"></span></div>` : ''}
+      <div class="oi-meta">${int(c.openings)} ${c.openings === 1 ? 'opening' : 'openings'}${c.postings > 1 ? ` in ${c.postings} postings` : ''} · ${esc([...c.types].join(', '))} · ${esc([...c.levels].join(', '))} · posted ${fmtDate(c.latest)}${c.url ? ` · <a href="${esc(c.url)}" target="_blank" rel="noopener">View job ↗</a>` : ''}</div>
+    </li>`).join('')}</ul>
+    ${list.length > 12 && !expanded ? `<button class="btn" type="button" data-allcos="${esc(role.name)}">Show all ${list.length} companies</button>` : ''}
+    ${state.source === 'sample' ? '<p class="small">Sample data: company names are invented for the demo.</p>' : ''}
+  </div>`;
+}
+$('#detail').addEventListener('click', e => {
+  const rb = e.target.closest('.role-btn');
+  if (rb) { state.openRole = state.openRole === rb.dataset.role ? null : rb.dataset.role; state.allCos = null; renderDetail(); const b = document.querySelector(`.role-btn[data-role="${CSS.escape(rb.dataset.role)}"]`); if (b) b.focus({ preventScroll: true }); return; }
+  const ac = e.target.closest('[data-allcos]');
+  if (ac) { state.allCos = ac.dataset.allcos; renderDetail(); }
+});
+
+/* ---------- glue ---------- */
+function renderAll(){
+  agg = aggregate(state.data);
+  if (!agg.sectors.some(s => s.name === state.selected)) state.selected = agg.sectors.slice().sort((a,b) => b.openings - a.openings)[0]?.name ?? null;
+  if (state.trendSector !== 'all' && !agg.sectors.some(s => s.name === state.trendSector)) state.trendSector = 'all';
+  $('#trendSector').innerHTML = `<option value="all">All sectors</option>` + agg.sectors.map(s => s.name).sort().map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('#trendSector').value = state.trendSector;
+  const pill = $('#sourcePill');
+  pill.textContent = state.source === 'sample' ? `Sample data · ${int(agg.postings)} postings` : `${state.source} · ${int(agg.postings)} postings`;
+  pill.classList.toggle('sample', state.source === 'sample');
+  $('#resetBtn').hidden = state.source === 'sample';
+  renderKPIs(); renderOverview(); renderTrend(); renderSectors(); renderDetail();
+}
+
+/* ---------- U-6 style underutilisation (official MOM figures, June) ---------- */
+const LABOUR = [ // [year, resident unemployment % (SA, end-June), resident time-related underemployment %]
+  [2017,3.1,3.0],[2018,2.9,3.3],[2019,3.2,3.1],[2020,4.1,4.1],[2021,3.6,3.5],
+  [2022,2.8,3.0],[2023,2.8,2.3],[2024,2.7,2.3],[2025,2.7,1.9],[2026,2.9,null]
+];
+function renderLabour(){
+  const host = $('#u6Chart');
+  const W = Math.max(300, host.clientWidth || 640), H = W < 500 ? 240 : 270;
+  const m = { t: 22, r: 8, b: 28, l: 34 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const ymax = 10, n = LABOUR.length, slot = iw / n, bw = Math.min(46, slot * .62);
+  const y = v => m.t + ih - v / ymax * ih;
+  const narrow = W < 460;
+  const bars = LABOUR.map(([yr, u, ue], i) => {
+    const cx = m.l + slot * i + slot / 2, x0 = cx - bw / 2;
+    const tot = ue == null ? null : +(u + ue).toFixed(1);
+    const tip = `${yr}: unemployment ${u}%` + (ue == null ? ', underemployment not yet published' : `, underemployment ${ue}%, total ${tot}%`);
+    return `<g><title>${tip}</title>
+      <rect x="${x0}" y="${y(u)}" width="${bw}" height="${y(0) - y(u)}" rx="3" fill="var(--coral)"/>
+      ${ue == null ? '' : `<rect x="${x0}" y="${y(u + ue)}" width="${bw}" height="${y(u) - y(u + ue) - 2}" rx="3" fill="var(--sky)"/>`}
+      <text x="${cx}" y="${ue == null ? y(u) - 6 : y(tot) - 6}" text-anchor="middle" style="fill:${ue == null ? 'var(--muted)' : 'var(--ink)'}">${ue == null ? u.toFixed(1) + '*' : tot.toFixed(1)}</text>
+      <text x="${cx}" y="${H - 8}" text-anchor="middle">${narrow ? '’' + String(yr).slice(2) : yr}</text></g>`;
+  }).join('');
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Resident unemployment plus time-related underemployment, 2017 to 2026">
+    ${[0,2,4,6,8,10].map(t => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${m.l - 6}" y="${y(t) + 3.5}" text-anchor="end">${t}%</text>`).join('')}
+    ${bars}</svg>`;
+  const full = LABOUR.filter(r => r[2] != null).map(([yr, u, ue]) => ({ yr, tot: +(u + ue).toFixed(1) }));
+  const peak = full.reduce((a, b) => b.tot > a.tot ? b : a), last = full[full.length - 1];
+  const low = full.reduce((a, b) => b.tot < a.tot ? b : a);
+  const u26 = LABOUR[LABOUR.length - 1], u25 = LABOUR[LABOUR.length - 2];
+  $('#u6Insights').innerHTML = `
+    <div class="insight"><div class="label">Latest full year</div><div class="big">${last.tot.toFixed(1)}%</div><div class="note">June ${last.yr}${low.yr === last.yr ? ', the lowest in this series' : ''}. Down from ${peak.tot.toFixed(1)}% at the ${peak.yr} COVID peak.</div></div>
+    <div class="insight"><div class="label">Unemployment, June 2026</div><div class="big">${u26[1]}% <span class="${u26[1] > u25[1] ? 'down' : 'up'}" style="font-size:15px">${u26[1] > u25[1] ? '▲' : '▼'} ${Math.abs(u26[1] - u25[1]).toFixed(1)} pts</span></div><div class="note">Residents, seasonally adjusted. Underemployment for 2026 is due in MOM's year-end release.</div></div>`;
+}
+
+function renderOverview(){
+  const { mode, list } = buckets(state.data);
+  if (list.length >= 2) {
+    const vals = list.map(b => b.openings), mx = Math.max(...vals), pi = vals.indexOf(mx), avg = mean(vals);
+    $('#tPeak').textContent = list[pi].long;
+    $('#tPeakNote').textContent = `Busiest ${mode} for new openings, ${Math.round((mx/avg-1)*100)}% above average.`;
+    const W = 300, H = 70, x = i => 4 + i*(W-8)/(list.length-1), y = v => H - 6 - v/mx*(H-16);
+    const d = vals.map((v,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1)).join('');
+    $('#tSpark').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}L${x(list.length-1)},${H}L${x(0)},${H}Z" fill="var(--accent-soft)"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.2" vector-effect="non-scaling-stroke"/><circle cx="${x(pi)}" cy="${y(mx)}" r="4" fill="var(--coral)"/></svg>`;
+  } else { $('#tPeak').textContent = 'Building history'; $('#tPeakNote').textContent = 'Run the scraper over a few weeks to see a trend.'; $('#tSpark').innerHTML = ''; }
+  $('#tSectors').innerHTML = agg.sectors.slice().sort((a,b) => b.openings - a.openings).slice(0,5).map(s =>
+    `<button class="t-row" type="button" data-name="${esc(s.name)}"><span class="n">${esc(s.name)}</span><span class="o">${int(s.openings)}</span><span class="p">${kfmt(s.median)}</span></button>`).join('');
+}
+$('#tSectors').onclick = e => { const b = e.target.closest('.t-row'); if (!b) return; state.selected = b.dataset.name; renderSectors(); openSector(); };
+
+function openSector(){ if (location.hash === '#sector') { renderDetail(); window.scrollTo(0, 0); } else location.hash = 'sector'; }
+const VIEWS = { overview: ['#overviewView','#navOverview'], season: ['#seasonView','#navSeason'], sectors: ['#sectorsView','#navSectors'], sector: ['#sectorView','#navSectors'], about: ['#aboutView','#navAbout'] };
+const ALIAS = { dashboard: 'overview', coffee: 'about', kopi: 'about', business: 'about' };
+function route(){
+  const h = location.hash.slice(1);
+  const key = VIEWS[h] ? h : (ALIAS[h] || 'overview');
+  for (const [k, [view]] of Object.entries(VIEWS)) $(view).hidden = k !== key;
+  for (const [, nav] of Object.values(VIEWS)) $(nav).removeAttribute('aria-current');
+  $(VIEWS[key][1]).setAttribute('aria-current', 'page');
+  $('.foot').hidden = !['overview','season','sectors','sector'].includes(key);
+  const target = ALIAS[h] && h !== 'dashboard' && document.getElementById(h === 'coffee' ? 'kopi' : h);
+  if (target) target.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+  if (key === 'season') { renderTrend(); renderLabour(); }
+  if (key === 'sector') renderDetail();
+}
+addEventListener('hashchange', route);
+
+/* ---------- buy me a kopi ---------- */
+// Fill these in: Buy Me a Coffee username (buymeacoffee.com/<username>), PayNow mobile/UEN, and business email.
+const SUPPORT = { bmcUsername: '', paynow: '', businessEmail: '' };
+$('#emailId').textContent = SUPPORT.businessEmail || 'Email address coming soon';
+$('#copyEmail').hidden = !SUPPORT.businessEmail;
+$('#copyEmail').onclick = async e => {
+  try { await navigator.clipboard.writeText(SUPPORT.businessEmail); e.target.textContent = 'Copied'; }
+  catch { const r = document.createRange(); r.selectNodeContents($('#emailId')); getSelection().removeAllRanges(); getSelection().addRange(r); e.target.textContent = 'Selected, press copy'; }
+  setTimeout(() => e.target.textContent = 'Copy', 1800);
+};
+function renderCoffee(){
+  const sel = document.querySelector('.tier[aria-checked="true"]');
+  const btn = $('#bmcBtn');
+  btn.textContent = `Buy me ${sel.dataset.label} · S$${sel.dataset.amt}`;
+  if (SUPPORT.bmcUsername) {
+    btn.href = 'https://www.buymeacoffee.com/' + encodeURIComponent(SUPPORT.bmcUsername);
+    btn.removeAttribute('aria-disabled');
+    $('#bmcNote').textContent = "Opens Buy Me a Coffee in a new tab. You'll confirm the amount there.";
+  } else {
+    btn.setAttribute('aria-disabled', 'true');
+    $('#bmcNote').textContent = 'The tip link is being set up. Check back soon.';
+  }
+  $('#paynowBox').hidden = !SUPPORT.paynow;
+  $('#paynowId').textContent = SUPPORT.paynow;
+}
+document.querySelector('.tiers').addEventListener('click', e => {
+  const t = e.target.closest('.tier'); if (!t) return;
+  document.querySelectorAll('.tier').forEach(x => x.setAttribute('aria-checked', x === t));
+  renderCoffee();
+});
+$('#copyPaynow').onclick = async e => {
+  try { await navigator.clipboard.writeText(SUPPORT.paynow); e.target.textContent = 'Copied'; }
+  catch { const r = document.createRange(); r.selectNodeContents($('#paynowId')); getSelection().removeAllRanges(); getSelection().addRange(r); e.target.textContent = 'Selected, press copy'; }
+  setTimeout(() => e.target.textContent = 'Copy', 1800);
+};
+renderCoffee();
+
+$('#trendSector').onchange = e => { state.trendSector = e.target.value; renderTrend(); };
+$('#secSort').onchange = e => { state.sort = e.target.value; renderSectors(); };
+$('#secSearch').oninput = e => { state.query = e.target.value; renderSectors(); };
+$('#sectors').onclick = e => { const b = e.target.closest('.sector'); if (!b) return; state.selected = b.dataset.name; renderSectors(); openSector(); };
+$('#resetBtn').onclick = () => { state.data = makeSample(); state.source = 'sample'; $('#msg').hidden = true; renderAll(); };
+$('#fileInput').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const msg = $('#msg');
+  try {
+    let arr = JSON.parse(await f.text());
+    if (!Array.isArray(arr)) arr = arr.results || arr.jobs || [];
+    const recs = arr.map(fromRaw).filter(Boolean);
+    if (!recs.length) throw new Error('This file has no job records with a title and posting date. Load the openings.json file the scraper writes.');
+    state.data = recs; state.source = f.name; state.selected = null; state.trendSector = 'all';
+    msg.hidden = true; renderAll();
+  } catch (err) {
+    msg.textContent = err instanceof SyntaxError ? `${f.name} isn't valid JSON. Load the openings.json file the scraper writes.` : err.message;
+    msg.hidden = false;
+  }
+};
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { renderTrend(); renderLabour(); renderDetail(); }, 150); });
+
+state.data = makeSample();
+renderAll();
+route();
+})();
+</script>
+</body>
+</html>
