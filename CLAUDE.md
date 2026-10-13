@@ -30,6 +30,8 @@ A free web app that shows unemployed people in Singapore where the jobs are and 
 | Back end | `backend/main.py`: FastAPI on Vercel (root directory `backend`), reads the `stats_*` views. Env `SUPABASE_URL`, `SUPABASE_ANON_KEY`. See `backend/README.md` |
 | Front end | `frontend/`: Next.js on Vercel (root directory `frontend`), hand-drawn SVG charts, no sample data. Env `API_URL`, `NEXT_PUBLIC_SITE_URL` |
 
+The live home page has a role search box (`frontend/components/RoleSearch.tsx`, served by `frontend/app/api/roles/route.ts`). The U-6 style labour panel was removed from the live site on 2026-10-13; `LabourPanel.tsx` and `lib/labour.ts` remain but are unused. `docs/session-2026-10-13.md` records what was built, decided and left open.
+
 The view names and columns in `db/schema.sql`, the `/v1/*` shapes in `backend/main.py` and the types in `frontend/lib/types.ts` are one contract; change them together. Slugs come from the scraper (`slugify()`); nothing else recomputes them.
 
 Originally built as a Claude.ai artifact. That's why everything lives in one file and why it avoids external requests. Those limits no longer apply locally, but keep the page working as a single static file until the planned stack replaces it.
@@ -57,6 +59,7 @@ db/schema.sql           Supabase schema, stats views and functions (re-runnable)
 backend/                FastAPI service + pytest suite
 frontend/               Next.js site (app/, components/, lib/)
 .github/workflows/      daily scrape
+docs/                   session reviews
 CLAUDE.md               this file
 README.md               short human-facing intro
 ```
