@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkline } from "@/components/Charts";
 import { HashRedirect } from "@/components/HashRedirect";
-import { LabourPanel } from "@/components/LabourPanel";
 import { DataFoot, Stamp, Unavailable } from "@/components/Notes";
+import { RoleSearch } from "@/components/RoleSearch";
 import { getMeta, getSectors, getTrends, HOURLY, isEmpty, live } from "@/lib/api";
 import { fmtDate, int, kfmt, money } from "@/lib/format";
 import { TAGLINE } from "@/lib/site";
@@ -32,13 +32,14 @@ export default async function OverviewPage() {
     <main id="main" className="view">
       <HashRedirect />
       <section className="hero">
-        <div>
+        <div className="hero-intro">
           <p className="tagline">{TAGLINE}</p>
           <h1>Find where Singapore is hiring, and what it pays.</h1>
           <p className="lede">
             Job postings and advertised monthly salaries by sector and role from MyCareersFuture, plus when employers post
             the most jobs.
           </p>
+          {ok ? <RoleSearch /> : null}
           <Stamp meta={ok ? meta : null} />
         </div>
         {ok && meta ? (
@@ -150,7 +151,6 @@ export default async function OverviewPage() {
         </div>
       </section>
 
-      <LabourPanel />
       <DataFoot meta={ok ? meta : null} />
     </main>
   );

@@ -116,6 +116,10 @@ export async function getRoles(
   return { ok: true, data: { total, roles } };
 }
 
+/** Roles whose name contains `q`, most postings first. Includes rare roles: their pages are built on first visit. */
+export const searchRoles = (q: string, limit: number, revalidate: number) =>
+  get<RolesResponse>(`/v1/roles?min_postings=1&limit=${limit}&q=${encodeURIComponent(q)}`, revalidate);
+
 /** Roles with at least this many postings get a page at build time; the rest are built on first visit. */
 export function prerenderMinPostings(): number {
   const n = Number.parseInt(process.env.PRERENDER_MIN_POSTINGS ?? "", 10);

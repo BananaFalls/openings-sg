@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { LabourPanel } from "@/components/LabourPanel";
 import { DataFoot } from "@/components/Notes";
 import { SeasonView } from "@/components/SeasonView";
 import { getMeta, getSectors, getTrends, HOURLY, isEmpty, live } from "@/lib/api";
@@ -9,7 +8,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Hiring season in Singapore: when employers post the most jobs",
   description:
-    "See how many jobs Singapore employers post each week or month on MyCareersFuture, for all sectors or one, alongside official MOM unemployment and underemployment rates.",
+    "See how many jobs Singapore employers post each week or month on MyCareersFuture, for all sectors or one.",
   alternates: { canonical: "/season" },
 };
 
@@ -21,7 +20,6 @@ export default async function SeasonPage() {
   return (
     <main id="main" className="view">
       <SeasonView meta={meta} sectors={sectors} trends={trends} current={null} />
-      <LabourPanel />
       <DataFoot meta={isEmpty(meta) ? null : meta} />
     </main>
   );
