@@ -58,7 +58,7 @@ data/                   scraped output (git-ignored)
 db/schema.sql           Supabase schema, stats views and functions (re-runnable)
 backend/                FastAPI service + pytest suite
 frontend/               Next.js site (app/, components/, lib/)
-.github/workflows/      daily scrape
+.github/workflows/      daily scrape (scrape.yml), manual experience lookups by sector (lookups.yml)
 docs/                   session reviews
 CLAUDE.md               this file
 README.md               short human-facing intro

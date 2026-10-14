@@ -523,11 +523,19 @@ def run_details_only(db, args):
         return 1
 
     def refresh():
-        try:
-            db.rpc("refresh_stats", timeout=900, retries=1)
-            print("Stats refreshed", flush=True)
-        except SupabaseError as e:
-            problems.append(f"Stats refresh failed: {e}")
+        # Several sectors may run side by side; if another one is refreshing, the
+        # database answers "lock timeout" (55P03). Wait for it rather than fail.
+        for attempt in range(4):
+            try:
+                db.rpc("refresh_stats", timeout=900, retries=1)
+                print("Stats refreshed", flush=True)
+                return
+            except SupabaseError as e:
+                if "55P03" in str(e) and attempt < 3:
+                    time.sleep(30)
+                    continue
+                problems.append(f"Stats refresh failed: {e}")
+                return
 
     print(f"Details for the crawl of {day}"
           + (f", sectors {args.details_sectors}" if args.details_sectors else ""))
