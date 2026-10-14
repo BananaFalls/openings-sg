@@ -98,6 +98,59 @@ def http_json(url, body=None, retries=3):
             raise urllib.error.URLError(e)
 
 
+class JobLookup:
+    """GET /v2/jobs/{uuid} over one connection kept open between lookups.
+
+    Opening a secure connection costs several round trips, which from a server
+    abroad was most of each lookup's time. Errors match http_json(): HTTPError for an
+    HTTP status, URLError for anything else, after the same retries.
+    """
+
+    def __init__(self):
+        self.host = urllib.parse.urlsplit(JOBS_URL).netloc
+        self.base = urllib.parse.urlsplit(JOBS_URL).path
+        self.headers = {k: v for k, v in HEADERS.items() if k != "Content-Type"}
+        self.conn = None
+        self.opened = 0  # connections opened, for the summary line
+
+    def close(self):
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
+
+    def get(self, uuid, retries=3):
+        path = f"{self.base}/{urllib.parse.quote(uuid, safe='')}"
+        attempt = 0
+        while True:
+            reused = self.conn is not None
+            try:
+                if not reused:
+                    self.conn = http.client.HTTPSConnection(self.host, timeout=30)
+                    self.opened += 1
+                self.conn.request("GET", path, headers=self.headers)
+                resp = self.conn.getresponse()
+                body = resp.read()
+                if resp.will_close:
+                    self.close()
+                if resp.status == 200:
+                    return json.loads(body)
+            except (OSError, http.client.HTTPException, ValueError) as e:
+                self.close()
+                if reused and not isinstance(e, ValueError):
+                    continue  # the server closed the idle connection: open a new one, no wait
+                if attempt < retries - 1:
+                    attempt += 1
+                    time.sleep(5 * attempt)
+                    continue
+                raise urllib.error.URLError(e) from None
+            if resp.status in (429, 500, 502, 503, 504) and attempt < retries - 1:
+                attempt += 1
+                print(f"  HTTP {resp.status}, retrying in {5 * attempt}s", file=sys.stderr)
+                time.sleep(5 * attempt)
+                continue
+            raise urllib.error.HTTPError(JOBS_URL + "/" + uuid, resp.status, resp.reason, resp.headers, None)
+
+
 def fetch_page(page, limit, category=None, use_get=False):
     """Return (results, total). Tries the search endpoint, falls back to /v2/jobs."""
     if not use_get:
@@ -409,6 +462,7 @@ def fetch_details(db, today, args, every=None):
             break
     print(f"\nLooking up details for {len(ids)} jobs")
     pending, found, gone, failed, streak = [], 0, 0, 0, 0
+    lookup = JobLookup()
 
     def save():
         if pending:
@@ -419,7 +473,7 @@ def fetch_details(db, today, args, every=None):
         if i:
             time.sleep(args.delay)
         try:
-            job = http_json(f"{JOBS_URL}/{urllib.parse.quote(uuid, safe='')}")
+            job = lookup.get(uuid)
         except urllib.error.URLError as e:
             if getattr(e, "code", None) in (404, 410):  # taken down since the crawl
                 gone, streak = gone + 1, 0
@@ -441,8 +495,10 @@ def fetch_details(db, today, args, every=None):
             if every and found % 1000 < 100 and found >= 1000:
                 every()
     save()
+    lookup.close()
     print(f"Details stored for {found} jobs ({gone} no longer listed, {failed} failed, "
-          f"{len(ids) - found - gone - failed} not stated or not reached)")
+          f"{len(ids) - found - gone - failed} not stated or not reached; "
+          f"{lookup.opened} connections opened)")
     return found, streak < 10
 
 
