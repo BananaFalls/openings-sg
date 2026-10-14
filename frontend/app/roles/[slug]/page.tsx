@@ -69,6 +69,8 @@ export default async function RolePage({ params }: Props) {
   const coScale = niceMax(Math.max(0, ...companies.map((c) => c.pay_max ?? c.pay_min ?? 0)) * 1.05);
   const payScale = niceMax((pay?.p75 ?? 0) * 1.25);
   const sectors = Array.isArray(r.sectors) ? r.sectors : [];
+  // The API lists the companies with the most postings, not always every company (r.companies).
+  const partial = companies.length > 0 && r.companies > companies.length;
 
   const companyList = (
     <ul className="offer-list">
@@ -206,16 +208,25 @@ export default async function RolePage({ params }: Props) {
             <div className="offers">
               <div className="offers-head">
                 <h2>
-                  {companies.length
+                  {companies.length && !partial
                     ? `${count(companies.length, "company", "companies")} hiring ${r.role}`
                     : `Companies hiring ${r.role}`}
                 </h2>
-                {companies.length ? <span>Sorted by highest pay offered</span> : null}
+                {companies.length ? (
+                  <span>
+                    {partial
+                      ? `The ${companies.length} with the most postings, of ${int(r.companies)}. `
+                      : ""}
+                    Sorted by highest pay offered
+                  </span>
+                ) : null}
               </div>
               {companies.length === 0 ? (
                 <p className="hint">No companies to list for this role right now.</p>
               ) : companies.length > SHOWN_COMPANIES ? (
-                <More label={`Show all ${companies.length} companies`}>{companyList}</More>
+                <More label={partial ? `Show all ${companies.length} listed` : `Show all ${companies.length} companies`}>
+                  {companyList}
+                </More>
               ) : (
                 companyList
               )}

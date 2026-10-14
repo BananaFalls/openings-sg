@@ -287,6 +287,13 @@ td.role a{color:var(--ink);text-decoration:none}
 td.role a:hover{color:var(--accent)}
 td.role .sub{display:block;font-weight:400;font-size:12px;color:var(--muted)}
 td.rng{min-width:120px}
+td.rng .sub{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.level-btn{all:unset;cursor:pointer;display:inline-flex;gap:6px;align-items:center;border-radius:4px;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.level-btn:hover{color:var(--accent)}
+.level-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.level-btn .arrow{color:var(--accent)}
+tr.picked td{background:var(--accent-soft)}
+.level-jobs{margin-top:16px}
 .sort-btn{all:unset;cursor:pointer;display:inline-flex;gap:4px;align-items:center;border-radius:4px}
 .sort-btn:hover{color:var(--ink)}
 .sort-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}

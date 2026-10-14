@@ -146,6 +146,9 @@ PAY_COLS = "pay_p25,pay_median,pay_p75,pay_mean,pay_n"
 SECTOR_COLS = f"sector,sector_slug,postings,companies,{PAY_COLS}"
 ROLE_COLS = f"role_slug,role,postings,companies,top_sector,top_sector_slug,{PAY_COLS}"
 SECTOR_ROLE_COLS = f"role_slug,role,postings,{PAY_COLS}"
+SECTOR_EXP_COLS = f"level,years_from,years_to,postings,{PAY_COLS}"
+SECTOR_EXP_ROLE_COLS = f"years_from,role_slug,role,postings,{PAY_COLS}"
+EXP_ROLE_ROWS = 600  # roles fetched per sector across its levels, most postings first
 
 
 def pay(r: Row) -> dict[str, Any]:
@@ -281,7 +284,7 @@ async def sectors(db: Db) -> dict[str, Any]:
 async def sector_detail(slug: str, db: Db) -> dict[str, Any]:
     check_slug(slug, "Sector")
     eq = {"sector_slug": f"eq.{slug}"}
-    (found, _), (dim_rows, _), (hist, _), (roles, _) = await asyncio.gather(
+    (found, _), (dim_rows, _), (hist, _), (roles, _), (exp, _), (exp_roles, _) = await asyncio.gather(
         db.select("stats_sector", SECTOR_COLS, eq, order="sector_slug.asc", limit=1),
         db.select(
             "stats_sector_dim",
@@ -302,6 +305,14 @@ async def sector_detail(slug: str, db: Db) -> dict[str, Any]:
             order="postings.desc.nullslast,role_slug.asc",
             limit=200,
         ),
+        db.select("stats_sector_exp", SECTOR_EXP_COLS, eq, order="years_from.asc"),
+        db.select(
+            "stats_sector_exp_role",
+            SECTOR_EXP_ROLE_COLS,
+            eq,
+            order="postings.desc.nullslast,years_from.asc,role_slug.asc",
+            limit=EXP_ROLE_ROWS,
+        ),
     )
     if not found:
         raise HTTPException(status_code=404, detail="Sector not found")
@@ -313,6 +324,29 @@ async def sector_detail(slug: str, db: Db) -> dict[str, Any]:
         "histogram": [
             {"from": h.get("bucket_from"), "to": h.get("bucket_to"), "count": h.get("count")}
             for h in hist
+        ],
+        # Pay by the years of experience a posting asks for, with the roles
+        # offered at each level. Only postings whose details have been looked up
+        # are counted, so `postings` is a sample.
+        "experience": [
+            {
+                "level": e.get("level"),
+                "years_from": e.get("years_from"),
+                "years_to": e.get("years_to"),  # null = this many years or more
+                "postings": e.get("postings"),
+                "pay": pay(e),
+                "roles": [
+                    {
+                        "role": r.get("role"),
+                        "slug": r.get("role_slug"),
+                        "postings": r.get("postings"),
+                        "pay": pay(r),
+                    }
+                    for r in exp_roles
+                    if r.get("years_from") == e.get("years_from")
+                ],
+            }
+            for e in exp
         ],
         "roles": [
             role_summary(

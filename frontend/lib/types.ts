@@ -28,6 +28,21 @@ export type SectorSummary = {
 export type Share = { name: string; postings: number };
 export type HistogramBin = { from: number | null; to: number | null; count: number };
 
+/** Pay for postings asking for years_from to years_to years of experience (years_to null = or more). */
+export type ExperienceBand = {
+  /** "Junior", "Senior" and so on. */
+  level: string;
+  years_from: number;
+  years_to: number | null;
+  /** Postings counted. Only postings whose experience we have looked up, so a sample. */
+  postings: number;
+  pay: Pay | null;
+  /** Roles offered at this level, most postings first. Same sample. */
+  roles: ExperienceRole[];
+};
+
+export type ExperienceRole = { role: string; slug: string; postings: number; pay: Pay | null };
+
 export type RoleSummary = {
   role: string;
   slug: string;
@@ -42,6 +57,7 @@ export type SectorDetail = SectorSummary & {
   employment_types: Share[];
   seniority: Share[];
   histogram: HistogramBin[];
+  experience: ExperienceBand[];
   roles: RoleSummary[];
 };
 

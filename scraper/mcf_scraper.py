@@ -9,7 +9,7 @@ Modes
     python3 mcf_scraper.py --all                 # every live listing, crawled sector by sector
     python3 mcf_scraper.py                       # newest postings only (up to --max-pages)
     python3 mcf_scraper.py --category "Information Technology"
-    python3 mcf_scraper.py --all --supabase --details 2500   # the daily database run
+    python3 mcf_scraper.py --all --supabase --prune-raw 30   # the daily database run
 
 Crawling --all walks each MCF category separately, so no single query has to
 page through the whole site (search APIs often cap deep pagination). Jobs listed
@@ -24,8 +24,9 @@ A job whose last_seen stops advancing has been taken down, which gives you
 With --supabase the jobs go to the Postgres `jobs` table (db/schema.sql) through
 the Supabase REST API instead of a file. It needs SUPABASE_URL and
 SUPABASE_SERVICE_KEY in the environment. The search API does not say how many
-vacancies a posting has, so --details N then asks the job-details endpoint for
-up to N live jobs whose vacancy count is still unknown.
+years of experience a posting asks for or how many vacancies it has, so
+--details N then asks the job-details endpoint, one job at a time, for up to N
+live jobs that have not been looked up yet.
 
 Standard library only. Keep --delay polite and check MyCareersFuture's terms of
 use before running at scale.
@@ -38,6 +39,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -127,33 +129,70 @@ def to_monthly(value, salary_type):
 
 
 # ---------- roles and slugs ----------
-# role_of() is a port of roleOf() in web/index.html. Keep the two in step.
-# JavaScript's \s, \b, \d and . differ a little from Python's, so the classes are
-# spelled out and the patterns use re.ASCII.
+# role_of() began as a port of roleOf() in web/index.html, which is why the
+# character classes are spelled out and the patterns use re.ASCII (JavaScript's
+# \s, \b, \d and . differ a little from Python's). It has since moved ahead of the
+# old page: job codes, emoji, "Team Lead" / "Head of Sales" and capitals are
+# handled here only.
 _WS_CHARS = ("\t\n\x0b\x0c\r \xa0     　﻿"
              + "".join(chr(c) for c in range(0x2000, 0x200b)))
 _WS = "[" + _WS_CHARS + "]"
 _DOT = "[^\n\r  ]"
 _BRACKETS = re.compile(rf"\({_DOT}*?\)|\[{_DOT}*?\]")
-_SPLIT = re.compile(rf"{_WS}[-–|/]{_WS}|,|{_WS}@{_WS}")
+# "|" and "," always split; a dash or slash only with a space on one side, so
+# "Part-time" and "Civil/Structural" stay whole but "YR23- Admin Assistant" splits.
+_SPLIT = re.compile(rf"{_WS}[-–—/]|[-–—/]{_WS}|[|,]|{_WS}@{_WS}")
 _STRIP = re.compile(
-    r"\b(senior|snr|sr|junior|jr|lead|principal|head of|entry[- ]level|fresh graduates?"
+    r"\b(senior|snr|sr|junior|jr|entry[- ]level|fresh graduates?"
     rf"|urgent(ly)?|immediate|hiring|\d+{_WS}*(months?|yrs?|years?)( contract)?)\b\.?",
     re.ASCII | re.IGNORECASE)
+# "Lead Engineer" -> "Engineer", but only in front of a role: "Team Lead", "Lead
+# Generation Specialist" and a bare "Principal" are roles in their own right.
+_LEADING = re.compile(rf"(lead|principal)\b\.?{_WS}+(?!gen(eration)?\b)(?=[^{_WS_CHARS}])",
+                      re.ASCII | re.IGNORECASE)
+_HASHTAG = re.compile(r"#[A-Za-z0-9]+")
+# Agencies put their own reference in front: "6723 - Admin Assistant", "M09 - Data
+# Scientist", "ET13496979 Executive Assistant". Not "3D Designer" or "B2B Sales".
+_CODE = re.compile(r"\d+|[A-Za-z]{1,3}\d{2,}[A-Za-z]{0,2}", re.ASCII)
+_CODE_PREFIX = re.compile(rf"^(\d{{3,}}|[A-Za-z]{{1,3}}\d{{4,}}){_WS}+(?=[^{_WS_CHARS}])", re.ASCII)
 _SPACES = re.compile(_WS + "+")
 _ACRONYM = re.compile(r"[A-Z0-9&]{2,4}")
+# Short words that are not acronyms when a title is typed in capitals ("CHEF").
+_PLAIN = frozenset("""
+    ALL AND AREA ART AS AT BANK BAR BEST BUS CAFE CALL CAR CARE CASH CHEF CITY COOK CORE
+    CREW CUM DATA DAY DAYS DE DESK EARN EAST EXP FAST FIRE FOOD FOOT FOR FREE FULL FUN
+    FUND GAME GAS GOOD GRAD GROW GYM HAIR HALF HEAD HELP HIGH HIRE HOME IN JOB JOIN KEY
+    LAB LAW LEAD LINE LOAN MIN MORE NAIL NEW NO NOW OF ON ONLY OR OUR OWN PAID PART PAY
+    PERM PLAN PORT RISK SAFE SALE SHIP SHOP SHOW SITE SOUS SPA TAX TAXI TEA TEAM TECH
+    TEMP TEST THE TIME TO TOOL TUAS UP VAN WALK WEB WEEK WEST WITH WORK YEAR YOU YOUR
+    ZONE""".split())
+_SMALL = frozenset("and at cum de for in of on or the to with".split())
+
+
+def _clean(piece):
+    """One part of a title with the noise words, reference code and extra spaces removed."""
+    s = _SPACES.sub(" ", re.sub(r"[#*!]", "", _STRIP.sub(" ", piece))).strip(_WS_CHARS)
+    s = _CODE_PREFIX.sub("", s, count=1)
+    while _LEADING.match(s):
+        s = _LEADING.sub("", s, count=1)
+    return s
 
 
 def role_of(title):
     """Normalise a job title into a role name: "Senior Data Analyst (Contract)" -> "Data Analyst"."""
-    s = _SPLIT.split(_BRACKETS.sub(" ", str(title)))[0]
-    s = _SPACES.sub(" ", re.sub(r"[#*!]", "", _STRIP.sub(" ", s))).strip(_WS_CHARS)
-    if not s:
+    s = "".join(c for c in _BRACKETS.sub(" ", str(title))
+                if unicodedata.category(c) not in ("So", "Sk") and c not in "‍️")
+    parts = [p for p in map(_clean, _SPLIT.split(_HASHTAG.sub(" ", s))) if p]
+    if not parts:
         return "Other"
+    # the first part that is a role, not an agency's reference code
+    s = next((p for p in parts if not _CODE.fullmatch(p)), parts[0])
     words = []
-    for w in s.split(" "):
-        if _ACRONYM.fullmatch(w):
+    for i, w in enumerate(s.split(" ")):
+        if _ACRONYM.fullmatch(w) and w not in _PLAIN:
             words.append(w)
+        elif i and w.lower() in _SMALL:
+            words.append(w.lower())
         else:
             # JavaScript upper-cases one UTF-16 unit, which leaves characters past U+FFFF alone
             head = w[0] if ord(w[0]) > 0xFFFF else w[0].upper()
@@ -202,8 +241,14 @@ SGT = dt.timezone(dt.timedelta(hours=8))  # database dates are Singapore dates
 BATCH = 500        # rows per upsert request
 PAGE = 1000        # Supabase returns at most 1,000 rows per request by default
 INT_MAX = 2**31    # the pay and vacancy columns are 32-bit integers
+MAX_EXPERIENCE = 50  # years; anything above is a typing slip, not a requirement
 DB_COLUMNS = ("id", "title", "company", "sector", "sector_slug", "role", "role_slug",
               "salary_min", "salary_max", "posted_date", "employment_type", "seniority", "url")
+
+
+def whole(v, low, high):
+    """v if it is a whole number from low to high, else None."""
+    return v if isinstance(v, int) and not isinstance(v, bool) and low <= v <= high else None
 
 
 def names(items, key):
@@ -257,7 +302,7 @@ def db_row(rec, job, today):
 
     Three columns are left out on purpose. An upsert only updates the columns it
     is given, so first_seen keeps the day the job was first inserted (the column
-    default) and vacancies keeps what the details pass found. salary_mid is
+    default) and vacancies and min_experience keep what the details pass found. salary_mid is
     generated by the database.
     """
     if not rec["id"]:
@@ -348,22 +393,24 @@ class JobSink:
 
 
 def fetch_details(db, today, args):
-    """Store the vacancy count of up to --details live jobs that lack one, newest first.
-    Returns False if MCF kept failing and the pass gave up."""
+    """Store the years of experience asked for, and the vacancy count, of up to --details
+    live jobs that have not been looked up, newest first. With fewer lookups than new
+    postings a day this covers a sample of each day's postings, not all of them.
+    Returns (jobs stored, False if MCF kept failing and the pass gave up)."""
     ids = []
     while len(ids) < args.details:
         want = min(PAGE, args.details - len(ids))
-        rows = db.call("GET", f"/jobs?select=id&vacancies=is.null&last_seen=eq.{today}"
+        rows = db.call("GET", f"/jobs?select=id&min_experience=is.null&last_seen=eq.{today}"
                               f"&order=posted_date.desc,id.asc&limit={want}&offset={len(ids)}")[0]
         ids += [r["id"] for r in rows or []]
         if len(rows or []) < want:
             break
-    print(f"\nLooking up vacancies for {len(ids)} jobs")
+    print(f"\nLooking up details for {len(ids)} jobs")
     pending, found, gone, failed, streak = [], 0, 0, 0, 0
 
     def save():
         if pending:
-            db.rpc("set_vacancies", {"items": pending})
+            db.rpc("set_details", {"items": pending})
             pending.clear()
 
     for i, uuid in enumerate(ids):
@@ -381,16 +428,18 @@ def fetch_details(db, today, args):
                 break
             continue
         streak = 0
-        n = job.get("numberOfVacancies") if isinstance(job, dict) else None
-        if isinstance(n, int) and not isinstance(n, bool) and 0 < n < INT_MAX:
-            pending.append({"id": uuid, "vacancies": n})
+        job = job if isinstance(job, dict) else {}
+        years = whole(job.get("minimumYearsExperience"), 0, MAX_EXPERIENCE)
+        if years is not None:
+            pending.append({"id": uuid, "min_experience": years,
+                            "vacancies": whole(job.get("numberOfVacancies"), 1, INT_MAX - 1)})
             found += 1
         if len(pending) >= 100:
             save()
     save()
-    print(f"Vacancies stored for {found} jobs ({gone} no longer listed, {failed} failed, "
+    print(f"Details stored for {found} jobs ({gone} no longer listed, {failed} failed, "
           f"{len(ids) - found - gone - failed} not stated or not reached)")
-    return streak < 10
+    return found, streak < 10
 
 
 def run_supabase(args, targets):
@@ -403,7 +452,7 @@ def run_supabase(args, targets):
     db = Supabase(url.strip(), key.strip())
     today = dt.datetime.now(SGT).date().isoformat()
     sink = JobSink(db, today)
-    empty, incomplete, problems = [], [], []
+    empty, incomplete, problems, crawled = [], [], [], False
     try:
         db.call("GET", "/jobs?select=id&limit=1")  # fail now, not after a 20 minute crawl
     except SupabaseError as e:
@@ -420,30 +469,60 @@ def run_supabase(args, targets):
                 empty.append(cat)
             elif not complete:
                 incomplete.append(label)
-        if args.details and not fetch_details(db, today, args):
-            problems.append("The vacancy lookups stopped early.")
-        if args.prune_raw:
-            n = db.rpc("prune_raw", {"keep_days": args.prune_raw})
-            print(f"Cleared raw data on {n} jobs delisted for over {args.prune_raw} days")
+        crawled = True
     except SupabaseError as e:
-        # carrying on would drop rows silently, so stop here; stats still refresh below
+        # carrying on would drop rows silently, so stop here
         problems.append(f"Database write failed, run abandoned: {e}")
     print(f"\n{sink.saved} rows saved to the database"
           + (f", {sink.skipped} skipped (no id or bad date)" if sink.skipped else ""))
-    try:
-        db.rpc("refresh_stats", timeout=900, retries=1)
-        print("Stats refreshed")
-    except SupabaseError as e:
-        problems.append(f"Stats refresh failed, the site still shows the old numbers: {e}")
+
+    def refresh():
+        try:
+            db.rpc("refresh_stats", timeout=900, retries=1)
+            print("Stats refreshed")
+            return True
+        except SupabaseError as e:
+            problems.append(f"Stats refresh failed, the site still shows the old numbers: {e}")
+            return False
+
+    # The stats count a posting as live only if the latest run saw it, so a refresh
+    # after a partial crawl would shrink the site to whatever that run reached.
+    # Only a whole crawl refreshes; otherwise the site keeps the last good numbers.
+    # The site and the history are updated straight after the crawl, before the
+    # slow details pass, so that pass can neither delay nor spoil them.
+    whole = args.all and crawled and not (empty or incomplete)
+    if whole:
+        refreshed = refresh()
+    elif args.all:
+        print("Stats not refreshed: the crawl was not complete, "
+              "so the site keeps the numbers from the last full crawl")
+    else:
+        print("Stats not refreshed: only a full crawl (--all) updates the site")
     # One row per sector and popular role for today, kept for good. Only after a
     # full, clean crawl: a partial day would sit in the history as a false dip.
-    if args.all and not (empty or incomplete or problems):
+    if whole and not problems:
         try:
             print(f'History saved for {db.rpc("snapshot_stats", timeout=300)}')
         except SupabaseError as e:
             problems.append(f"History snapshot failed, today is missing from the history: {e}")
     elif args.all:
         print("History not saved for today: the crawl was not complete")
+
+    if crawled:
+        found = 0
+        try:
+            if args.details:
+                found, ok = fetch_details(db, today, args)
+                if not ok:
+                    problems.append("The details lookups stopped early.")
+            if args.prune_raw:
+                n = db.rpc("prune_raw", {"keep_days": args.prune_raw})
+                print(f"Cleared raw data on {n} jobs delisted for over {args.prune_raw} days")
+        except SupabaseError as e:
+            problems.append(f"Database write failed during the details pass: {e}")
+        # once more, so the pay-by-experience figures include tonight's lookups
+        if whole and refreshed and found:
+            refresh()
     try:
         print(f'{db.count("jobs", f"last_seen=eq.{today}")} jobs live today, '
               f'{db.count("jobs", f"first_seen=eq.{today}")} new')
@@ -454,7 +533,7 @@ def run_supabase(args, targets):
               "\nCheck these names against the category filter on mycareersfuture.gov.sg.")
     if incomplete:
         print("Crawl stopped early for: " + ", ".join(incomplete) +
-              "\nJobs it did not reach keep their old last_seen and are not counted as live.")
+              "\nJobs it did not reach keep their old last_seen.")
     for p in problems:
         print(p, file=sys.stderr)
     return 1 if empty or incomplete or problems else 0
@@ -521,7 +600,8 @@ def main():
                     help="save to the Supabase jobs table instead of --out "
                          "(needs SUPABASE_URL and SUPABASE_SERVICE_KEY)")
     ap.add_argument("--details", type=int, default=0, metavar="N",
-                    help="with --supabase: look up vacancies for up to N live jobs that lack them")
+                    help="with --supabase: look up years of experience and vacancies for up to N "
+                         "live jobs that lack them")
     ap.add_argument("--prune-raw", type=int, default=0, metavar="DAYS",
                     help="with --supabase: clear the raw column of jobs delisted for over DAYS "
                          "days, to save database space (default: keep everything)")

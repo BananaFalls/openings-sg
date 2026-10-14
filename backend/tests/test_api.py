@@ -97,7 +97,7 @@ def test_sector_detail(client, seeded):
     r = client.get("/v1/sectors/information-technology")
     assert r.status_code == 200
     body = r.json()
-    assert set(body) == SECTOR_KEYS | {"employment_types", "seniority", "histogram", "roles"}
+    assert set(body) == SECTOR_KEYS | {"employment_types", "seniority", "histogram", "experience", "roles"}
     assert body["sector"] == "Information Technology"
     assert body["pay"]["median"] == 7250.0
     assert body["employment_types"] == [
@@ -112,6 +112,44 @@ def test_sector_detail(client, seeded):
         {"from": 4000, "to": 5000, "count": 655},
         {"from": 5000, "to": 6000, "count": 980},
         {"from": 6000, "to": 7000, "count": 1204},
+    ]
+    assert body["experience"] == [
+        {
+            "level": "Junior",
+            "years_from": 0,
+            "years_to": 2,
+            "postings": 140,
+            "pay": {"p25": 3500.0, "median": 4500.0, "p75": 6000.0, "mean": 4820.0, "n": 138},
+            "roles": [
+                {
+                    "role": "Software Engineer",
+                    "slug": "software-engineer",
+                    "postings": 31,
+                    "pay": {"p25": 4500.0, "median": 5500.0, "p75": 6500.0, "mean": 5540.0, "n": 30},
+                },
+                {
+                    "role": "Data Analyst",
+                    "slug": "data-analyst",
+                    "postings": 12,
+                    "pay": {"p25": 4000.0, "median": 4500.0, "p75": 5200.0, "mean": 4610.0, "n": 12},
+                },
+            ],
+        },
+        {
+            "level": "Senior",
+            "years_from": 6,
+            "years_to": None,
+            "postings": 96,
+            "pay": {"p25": 8000.0, "median": 10000.0, "p75": 13000.0, "mean": 10480.5, "n": 95},
+            "roles": [
+                {
+                    "role": "Software Engineer",
+                    "slug": "software-engineer",
+                    "postings": 9,
+                    "pay": {"p25": 9000.0, "median": 11000.0, "p75": 13000.0, "mean": 11200.0, "n": 9},
+                },
+            ],
+        },
     ]
     assert [x["slug"] for x in body["roles"]] == ["software-engineer", "data-analyst", "it-intern"]
     for role in body["roles"]:
@@ -130,6 +168,7 @@ def test_sector_detail_with_no_pay_and_no_breakdowns(client, seeded):
     assert body["employment_types"] == []
     assert body["seniority"] == []
     assert body["histogram"] == []
+    assert body["experience"] == []
     assert body["roles"] == []
 
 

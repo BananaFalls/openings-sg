@@ -1,7 +1,9 @@
 name: Daily scrape
 
-# Crawls every live MyCareersFuture job into Supabase, refreshes the stats views,
-# saves the day's history snapshot and clears bulky raw data on long-gone jobs.
+# Crawls every live MyCareersFuture job into Supabase, looks up the years of
+# experience asked for on up to 3,500 new postings (about a day's worth), refreshes
+# the stats views, saves the day's history snapshot and clears bulky raw data on
+# long-gone jobs.
 #
 # Needs two repository secrets (Settings > Secrets and variables > Actions):
 #   SUPABASE_URL          e.g. https://abcdefgh.supabase.co
@@ -24,20 +26,22 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    # Measured on the first run: the crawl takes about 35 minutes, so a month of
-    # runs fits inside the 2,000 free Actions minutes a private repo gets.
-    timeout-minutes: 90
+    # The crawl takes about 40 minutes; the experience lookups run at about 23 a
+    # minute, so 3,500 take about 2.5 hours. The repo is public, so Actions minutes
+    # are free; GitHub's own limit is 6 hours a job.
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       # Exits 1 if a category came back empty or stopped early, so the run shows
-      # as failed. What it did fetch is saved and the stats are refreshed first,
-      # but that day is left out of the history.
+      # as failed. What it did fetch is saved, but the stats are not refreshed and
+      # the day is left out of the history, so the site keeps the last full
+      # crawl's numbers.
       - name: Scrape MyCareersFuture into Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           PYTHONUNBUFFERED: "1"
-        run: python scraper/mcf_scraper.py --all --supabase --prune-raw 30
+        run: python scraper/mcf_scraper.py --all --supabase --details 3500 --prune-raw 30

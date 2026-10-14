@@ -12,11 +12,15 @@
 --
 -- Words used below
 --   live      a posting seen in the latest scrape: last_seen = max(last_seen).
---             If a scrape misses a sector, that sector's jobs are not live until
---             the next good run.
+--             A scrape that misses a sector would leave that sector's jobs out,
+--             so the scraper only refreshes the stats after a whole crawl.
 --   postings  listings. Every statistic counts postings. MCF's search results do
 --             not say how many people a posting is hiring for, so vacancies are
---             not counted (the `vacancies` column and set_vacancies() are unused).
+--             not counted (the `vacancies` column is stored but unused).
+--   experience  the least years of experience a posting asks for (MCF's
+--             minimumYearsExperience). Only the job-details endpoint has it, one
+--             job per request, so it is known for a sample of postings: those
+--             the scraper's --details pass has looked up. NULL = not looked up.
 --   history   one small row per day, sector and popular role, written by
 --             snapshot_stats() after each full crawl and never pruned. MCF only
 --             shows what is live today, so this cannot be rebuilt later.
@@ -36,17 +40,9 @@ create table if not exists public.jobs (
   role_slug       text not null,
   salary_min      integer,                     -- monthly SGD
   salary_max      integer,
-  -- Midpoint of the advertised range, or the one figure given.
-  -- Junk rule: when the highest figure is under 300 a month (MCF has postings
-  -- with pay such as 1-1 or 13-15, about 2% of jobs) the pay is treated as
-  -- missing, so salary_mid is NULL and the posting is left out of every pay
-  -- statistic. salary_min and salary_max keep what was advertised.
-  salary_mid      numeric generated always as (
-                    case when greatest(nullif(salary_min, 0), nullif(salary_max, 0)) >= 300
-                         then round((coalesce(nullif(salary_min, 0), salary_max)::numeric
-                                     + coalesce(nullif(salary_max, 0), salary_min)) / 2, 1)
-                    end) stored,
+  -- salary_mid, the pay every statistic uses, is added under "pay rule" below.
   vacancies       integer,                     -- NULL = not yet known (set by the details pass)
+  min_experience  integer,                     -- years asked for; NULL = not yet known (details pass)
   posted_date     date not null,
   employment_type text,
   seniority       text,
@@ -57,11 +53,15 @@ create table if not exists public.jobs (
   raw             jsonb                        -- slimmed MCF object, see slim_raw() in the scraper
 );
 
+-- For a table made before this column existed.
+alter table public.jobs add column if not exists min_experience integer;
+
 -- Finds the live postings, and the latest scrape date.
 create index if not exists jobs_last_seen_idx on public.jobs (last_seen);
--- The scraper's "live jobs with no vacancy count yet, newest first" lookup.
-create index if not exists jobs_vacancy_todo_idx on public.jobs (last_seen, posted_date desc)
-  where vacancies is null;
+-- The scraper's "live jobs not looked up yet, newest first" lookup.
+drop index if exists public.jobs_vacancy_todo_idx;
+create index if not exists jobs_details_todo_idx on public.jobs (last_seen, posted_date desc)
+  where min_experience is null;
 -- No sector or role indexes: nothing reads `jobs` by them (the site reads the
 -- stats views) and on the 500 MB free tier every index costs space.
 
@@ -108,11 +108,49 @@ drop materialized view if exists public.stats_sector;
 drop materialized view if exists public.stats_sector_dim;
 drop materialized view if exists public.stats_sector_hist;
 drop materialized view if exists public.stats_sector_role;
+drop materialized view if exists public.stats_sector_exp;
+drop materialized view if exists public.stats_sector_exp_role;
 drop materialized view if exists public.stats_role;
 drop materialized view if exists public.stats_role_sector;
 drop materialized view if exists public.stats_role_dim;
 drop materialized view if exists public.stats_role_company;
 drop materialized view if exists public.stats_trend;
+
+-- ---------------------------------------------------------------- pay rule
+-- salary_mid = midpoint of the advertised range, or the one figure given.
+-- Junk rule: the pay is treated as missing, so salary_mid is NULL and the
+-- posting is left out of every pay statistic, when
+--   the highest figure is under 300 a month (MCF has postings with pay such as
+--   1-1 or 13-15, about 2% of jobs), or
+--   the midpoint is over 50,000 a month (a handful of postings, nearly all a
+--   yearly figure entered as monthly, e.g. 254,000).
+-- salary_min and salary_max keep what was advertised.
+--
+-- A generated column cannot be edited in place, so when the rule stored in the
+-- database is not this one the column is dropped and added again, which
+-- recalculates every row. It sits here because the views that read it have just
+-- been dropped. To change a limit, change the number in both places below.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_attribute a
+    join pg_attrdef d on d.adrelid = a.attrelid and d.adnum = a.attnum
+    where a.attrelid = 'public.jobs'::regclass and a.attname = 'salary_mid' and not a.attisdropped
+      and pg_get_expr(d.adbin, d.adrelid) like '%300%'
+      and pg_get_expr(d.adbin, d.adrelid) like '%50000%'
+  ) then
+    alter table public.jobs drop column if exists salary_mid;
+    alter table public.jobs add column salary_mid numeric generated always as (
+      case when greatest(nullif(salary_min, 0), nullif(salary_max, 0)) >= 300
+            and coalesce(nullif(salary_min, 0), salary_max)::numeric
+                + coalesce(nullif(salary_max, 0), salary_min) <= 2 * 50000
+           then round((coalesce(nullif(salary_min, 0), salary_max)::numeric
+                       + coalesce(nullif(salary_max, 0), salary_min)) / 2, 1)
+      end) stored;
+  end if;
+end;
+$$;
 
 -- One row. All NULL / 0 until the first scrape.
 create materialized view public.stats_meta as
@@ -208,6 +246,56 @@ select
 from public.jobs
 where last_seen = (select max(last_seen) from public.jobs)
 group by sector_slug, role_slug;
+
+-- The experience levels, by the least years a posting asks for (years_to NULL =
+-- or more). They follow what employers ask for: in a sample of 2,500 postings
+-- (Oct 2026) almost every posting named 0, 1, 2, 3, 5, 8 or 10 years; pay was flat
+-- from 0 to 2 years, stepped up at 3 and again past 5. To change the levels, edit
+-- this list and run the file again.
+create or replace view public.exp_levels (years_from, years_to, level) as
+values (0, 2, 'Junior'), (3, 5, 'Mid-level'), (6, null::int, 'Senior');
+revoke all on public.exp_levels from anon, authenticated;
+
+-- Pay by experience level per sector, from the live postings whose experience
+-- has been looked up (a sample, see "experience" at the top). `postings` is how
+-- many of those fall in the level. A level with no such posting has no row.
+create materialized view public.stats_sector_exp as
+select
+  j.sector_slug,
+  b.years_from,
+  b.years_to,                                                                       -- NULL = or more
+  b.level,
+  count(*)::int                                                                     as postings,
+  round(percentile_cont(0.25) within group (order by j.salary_mid::float8))::int    as pay_p25,
+  round(percentile_cont(0.5)  within group (order by j.salary_mid::float8))::int    as pay_median,
+  round(percentile_cont(0.75) within group (order by j.salary_mid::float8))::int    as pay_p75,
+  round(avg(j.salary_mid))::int                                                     as pay_mean,
+  count(j.salary_mid)::int                                                          as pay_n
+from public.jobs j
+join public.exp_levels b
+  on j.min_experience >= b.years_from and (b.years_to is null or j.min_experience <= b.years_to)
+where j.last_seen = (select max(last_seen) from public.jobs)
+group by j.sector_slug, b.years_from, b.years_to, b.level;
+
+-- The roles behind each level: which jobs a sector offers at that experience,
+-- and what they advertise. Same sample of postings as stats_sector_exp.
+create materialized view public.stats_sector_exp_role as
+select
+  j.sector_slug,
+  b.years_from,
+  j.role_slug,
+  mode() within group (order by j.role)                                             as role,
+  count(*)::int                                                                     as postings,
+  round(percentile_cont(0.25) within group (order by j.salary_mid::float8))::int    as pay_p25,
+  round(percentile_cont(0.5)  within group (order by j.salary_mid::float8))::int    as pay_median,
+  round(percentile_cont(0.75) within group (order by j.salary_mid::float8))::int    as pay_p75,
+  round(avg(j.salary_mid))::int                                                     as pay_mean,
+  count(j.salary_mid)::int                                                          as pay_n
+from public.jobs j
+join public.exp_levels b
+  on j.min_experience >= b.years_from and (b.years_to is null or j.min_experience <= b.years_to)
+where j.last_seen = (select max(last_seen) from public.jobs)
+group by j.sector_slug, b.years_from, j.role_slug;
 
 -- role = the most common spelling among the postings sharing the slug.
 -- top_sector = the sector with the most postings for the role.
@@ -305,6 +393,9 @@ create unique index stats_sector_key       on public.stats_sector (sector_slug);
 create unique index stats_sector_dim_key   on public.stats_sector_dim (sector_slug, dim, name);
 create unique index stats_sector_hist_key  on public.stats_sector_hist (sector_slug, bucket_from);
 create unique index stats_sector_role_key  on public.stats_sector_role (sector_slug, role_slug);
+create unique index stats_sector_exp_key   on public.stats_sector_exp (sector_slug, years_from);
+create unique index stats_sector_exp_role_key
+  on public.stats_sector_exp_role (sector_slug, years_from, role_slug);
 create unique index stats_role_key         on public.stats_role (role_slug);
 create unique index stats_role_sector_key  on public.stats_role_sector (role_slug, sector_slug);
 create unique index stats_role_dim_key     on public.stats_role_dim (role_slug, dim, name);
@@ -314,13 +405,15 @@ create unique index stats_trend_key        on public.stats_trend (sector_slug, g
 -- The public may read the stats, and only read them.
 revoke all on
   public.stats_meta, public.stats_sector, public.stats_sector_dim, public.stats_sector_hist,
-  public.stats_sector_role, public.stats_role, public.stats_role_sector, public.stats_role_dim,
-  public.stats_role_company, public.stats_trend
+  public.stats_sector_role, public.stats_sector_exp, public.stats_sector_exp_role, public.stats_role,
+  public.stats_role_sector,
+  public.stats_role_dim, public.stats_role_company, public.stats_trend
 from anon, authenticated;
 grant select on
   public.stats_meta, public.stats_sector, public.stats_sector_dim, public.stats_sector_hist,
-  public.stats_sector_role, public.stats_role, public.stats_role_sector, public.stats_role_dim,
-  public.stats_role_company, public.stats_trend
+  public.stats_sector_role, public.stats_sector_exp, public.stats_sector_exp_role, public.stats_role,
+  public.stats_role_sector,
+  public.stats_role_dim, public.stats_role_company, public.stats_trend
 to anon, service_role;
 
 -- ---------------------------------------------------------------- functions
@@ -342,6 +435,8 @@ begin
   refresh materialized view concurrently public.stats_sector_dim;
   refresh materialized view concurrently public.stats_sector_hist;
   refresh materialized view concurrently public.stats_sector_role;
+  refresh materialized view concurrently public.stats_sector_exp;
+  refresh materialized view concurrently public.stats_sector_exp_role;
   refresh materialized view concurrently public.stats_role;
   refresh materialized view concurrently public.stats_role_sector;
   refresh materialized view concurrently public.stats_role_dim;
@@ -393,19 +488,24 @@ begin
 end;
 $$;
 
--- Store vacancy counts: items = [{"id": "...", "vacancies": 3}, ...].
--- Returns how many jobs were updated. (A REST upsert cannot do this: it would
--- try to insert rows that lack the NOT NULL columns.)
-create or replace function public.set_vacancies(items jsonb)
+-- Store what the details pass found:
+--   items = [{"id": "...", "min_experience": 3, "vacancies": 2}, ...].
+-- A missing or null value leaves that column as it was. Returns how many jobs
+-- were updated. (A REST upsert cannot do this: it would try to insert rows that
+-- lack the NOT NULL columns.) Replaces the older set_vacancies().
+drop function if exists public.set_vacancies(jsonb);
+create or replace function public.set_details(items jsonb)
 returns integer
 language sql
 set search_path = public, pg_temp
 as $$
   with updated as (
     update public.jobs j
-    set vacancies = x.vacancies
-    from jsonb_to_recordset(items) as x(id text, vacancies integer)
-    where j.id = x.id and x.vacancies > 0
+    set min_experience = coalesce(x.min_experience, j.min_experience),
+        vacancies      = coalesce(x.vacancies, j.vacancies)
+    from jsonb_to_recordset(items) as x(id text, min_experience integer, vacancies integer)
+    where j.id = x.id
+      and (x.min_experience >= 0 or x.vacancies > 0)
     returning 1
   )
   select count(*)::int from updated;
@@ -432,11 +532,11 @@ $$;
 
 revoke all on function public.refresh_stats()      from public, anon, authenticated;
 revoke all on function public.snapshot_stats()     from public, anon, authenticated;
-revoke all on function public.set_vacancies(jsonb) from public, anon, authenticated;
+revoke all on function public.set_details(jsonb)   from public, anon, authenticated;
 revoke all on function public.prune_raw(integer)   from public, anon, authenticated;
 grant execute on function public.refresh_stats()      to service_role;
 grant execute on function public.snapshot_stats()     to service_role;
-grant execute on function public.set_vacancies(jsonb) to service_role;
+grant execute on function public.set_details(jsonb)   to service_role;
 grant execute on function public.prune_raw(integer)   to service_role;
 
 -- The REST API cuts service-role requests off after a few seconds by default,

@@ -29,6 +29,8 @@ VIEWS = (
     "stats_sector_dim",
     "stats_sector_hist",
     "stats_sector_role",
+    "stats_sector_exp",
+    "stats_sector_exp_role",
     "stats_role",
     "stats_role_sector",
     "stats_role_dim",
@@ -184,6 +186,52 @@ def seed(db: FakePostgrest) -> None:
         {"sector_slug": "information-technology", "bucket_from": 4000, "bucket_to": 5000, "count": 655},
         {"sector_slug": "information-technology", "bucket_from": 5000, "bucket_to": 6000, "count": 980},
         {"sector_slug": "f-b", "bucket_from": 2000, "bucket_to": 3000, "count": 3900},
+    ]
+    t["stats_sector_exp"] = [
+        {
+            "sector_slug": "information-technology",
+            "level": "Senior",
+            "years_from": 6,
+            "years_to": None,
+            "postings": 96,
+            **pay_cols(8000.0, 10000.0, 13000.0, 10480.5, 95),
+        },
+        {
+            "sector_slug": "information-technology",
+            "level": "Junior",
+            "years_from": 0,
+            "years_to": 2,
+            "postings": 140,
+            **pay_cols(3500.0, 4500.0, 6000.0, 4820.0, 138),
+        },
+        {"sector_slug": "f-b", "level": "Junior", "years_from": 0, "years_to": 2, "postings": 60, **pay_cols(2200.0, 2600.0, 3000.0, 2650.0, 60)},
+    ]
+    t["stats_sector_exp_role"] = [
+        {
+            "sector_slug": "information-technology",
+            "years_from": 0,
+            "role_slug": "data-analyst",
+            "role": "Data Analyst",
+            "postings": 12,
+            **pay_cols(4000.0, 4500.0, 5200.0, 4610.0, 12),
+        },
+        {
+            "sector_slug": "information-technology",
+            "years_from": 0,
+            "role_slug": "software-engineer",
+            "role": "Software Engineer",
+            "postings": 31,
+            **pay_cols(4500.0, 5500.0, 6500.0, 5540.0, 30),
+        },
+        {
+            "sector_slug": "information-technology",
+            "years_from": 6,
+            "role_slug": "software-engineer",
+            "role": "Software Engineer",
+            "postings": 9,
+            **pay_cols(9000.0, 11000.0, 13000.0, 11200.0, 9),
+        },
+        {"sector_slug": "f-b", "years_from": 0, "role_slug": "cook", "role": "Cook", "postings": 8, **PAY_NULL},
     ]
     t["stats_sector_role"] = [
         {

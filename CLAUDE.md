@@ -20,13 +20,13 @@ A free web app that shows unemployed people in Singapore where the jobs are and 
 | Database | None |
 | Official stats | U-6 style chart uses figures hard-coded in `LABOUR` inside `index.html` |
 
-**New stack (live since 2026-10-13):** site https://openings-sg.vercel.app, API https://openings-sg-api.vercel.app, repo github.com/BananaFalls/openings-sg (private). Pushing to `main` deploys both Vercel projects. Schema changes are not automatic: paste `db/schema.sql` into the Supabase SQL editor.
+**New stack (live since 2026-10-13):** site https://openings-sg.vercel.app, API https://openings-sg-api.vercel.app, repo github.com/BananaFalls/openings-sg (public since 2026-10-14). Pushing to `main` deploys both Vercel projects. Schema changes are not automatic: paste `db/schema.sql` into the Supabase SQL editor.
 
 | Part | What it is |
 |---|---|
-| Database | `db/schema.sql`: Supabase Postgres. `jobs` table plus ten `stats_*` materialised views; `refresh_stats()` rebuilds them. `history_sector` / `history_role` hold one row per day, written by `snapshot_stats()` and never pruned. The public (anon) key can read the views only |
+| Database | `db/schema.sql`: Supabase Postgres. `jobs` table plus eleven `stats_*` materialised views; `refresh_stats()` rebuilds them. `history_sector` / `history_role` hold one row per day, written by `snapshot_stats()` and never pruned. The public (anon) key can read the views only |
 | Scraper | `mcf_scraper.py --all --supabase --prune-raw 30` upserts to `jobs` over Supabase's REST API (still standard library only), refreshes the stats, saves the day's history after a full clean crawl, and clears `raw` on jobs gone over 30 days |
-| Schedule | `.github/workflows/scrape.yml`: daily at 03:17 SGT. Secrets `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` |
+| Schedule | `.github/workflows/scrape.yml`: daily at 03:17 SGT, `--details 3500` (experience lookups, about 2.5 h; the repo is public so Actions minutes are free). Secrets `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` |
 | Back end | `backend/main.py`: FastAPI on Vercel (root directory `backend`), reads the `stats_*` views. Env `SUPABASE_URL`, `SUPABASE_ANON_KEY`. See `backend/README.md` |
 | Front end | `frontend/`: Next.js on Vercel (root directory `frontend`), hand-drawn SVG charts, no sample data. Env `API_URL`, `NEXT_PUBLIC_SITE_URL` |
 
@@ -129,9 +129,11 @@ Rules the numbers follow:
 
 - Uses MCF's public search API (`POST /v2/search`), falling back to `GET /v2/jobs`. Verified against the live API on 2026-10-13: all 43 categories valid, about 70k live jobs, about 724 requests per `--all` run.
 - MCF limits: `limit` max 100, and only the first 10,000 results of any query are reachable. `--all` crawls category by category to stay under that; the largest category was 7,455. The run exits 1 if a category is empty or stops early.
-- Search results carry **no vacancy count**; only `GET /v2/jobs/{uuid}` does (about 23 lookups a minute from GitHub's runners). The `--details` flag, the `vacancies` column and `set_vacancies()` still exist but nothing uses them. JSON-file mode still writes 1.
+- Search results carry **no vacancy count**; only `GET /v2/jobs/{uuid}` does (about 23 lookups a minute from GitHub's runners). JSON-file mode still writes 1.
+- **Years of experience** (`minimumYearsExperience`) is also only on `GET /v2/jobs/{uuid}`. `--details N` looks up N live jobs a night that have not been checked, newest first, and stores `min_experience` (and `vacancies`, still unused) through `set_details()`. So experience is known for a sample of postings; `stats_sector_exp` and the sector page's "Pay by experience" table use only those and say so. Levels: Junior 0 to 2 years, Mid-level 3 to 5, Senior 6 or more (set in the view).
 - `posted_date` is MCF's `newPostingDate`, which can be a repost date.
-- Pay under S$300 a month (about 2% of postings, e.g. 1-1) is treated as missing in the database's pay stats.
+- Pay under S$300 a month (about 2% of postings, e.g. 1-1) is treated as missing in the database's pay stats. So is a midpoint over S$50,000 a month (a handful of postings, nearly all yearly pay entered as monthly).
+- The stats views are refreshed only after a whole `--all` crawl. A partial or single-category run saves its jobs but leaves the site on the last full crawl's numbers.
 - Keep `--delay` ≥ 1s. Check MCF's terms of use before scaling up.
 
 ## Open TODOs

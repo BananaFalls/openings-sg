@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RangeBar, ShareBars } from "@/components/Bars";
 import { Histogram } from "@/components/Charts";
+import { ExperiencePay } from "@/components/ExperiencePay";
 import { More } from "@/components/More";
 import { DataFoot, Stamp, Unavailable } from "@/components/Notes";
 import { SectorPicker } from "@/components/SectorPicker";
@@ -16,6 +17,8 @@ export const revalidate = 86400;
 type Props = { params: Promise<{ slug: string }> };
 
 const SHOWN_ROLES = 15;
+/* The API sends a sector's roles with the most postings, up to this many (see sector_detail in backend/main.py). */
+const ROLE_CAP = 200;
 
 export async function generateStaticParams() {
   const sectors = optional(await getSectors(DAILY));
@@ -72,6 +75,7 @@ export default async function SectorPage({ params }: Props) {
 
   const pay = s.pay;
   const roles = Array.isArray(s.roles) ? s.roles.slice().sort((a, b) => b.postings - a.postings) : [];
+  const capped = roles.length >= ROLE_CAP;
   const scale = niceMax(Math.max(0, ...roles.map((r) => r.pay?.p75 ?? 0)) * 1.05);
   const byPostings = sectors.slice().sort((a, b) => b.postings - a.postings);
   const rank = byPostings.findIndex((x) => x.slug === s.slug) + 1;
@@ -80,6 +84,7 @@ export default async function SectorPage({ params }: Props) {
   const view = trendView(trends, meta?.first_scrape, meta?.last_scrape);
   const busiest = view.peak >= 0 && view.list.filter((b) => !b.partial).length >= 2 ? view.list[view.peak] : null;
   const hasPay = Array.isArray(s.histogram) && s.histogram.some((b) => b.count > 0);
+  const levels = (Array.isArray(s.experience) ? s.experience : []).filter((l) => l && l.postings > 0);
 
   const rolesTable = (
     <div className="tbl-wrap">
@@ -205,6 +210,7 @@ export default async function SectorPage({ params }: Props) {
                 <p className="hint">None of the postings in this sector state their pay yet.</p>
               )}
             </div>
+            {levels.length ? <ExperiencePay sector={s.sector} levels={levels} /> : null}
             <div className="split">
               <div>
                 <h3>Employment type</h3>
@@ -223,11 +229,16 @@ export default async function SectorPage({ params }: Props) {
               {roles.length === 0 ? (
                 <p className="hint">No roles to list for this sector yet.</p>
               ) : roles.length > SHOWN_ROLES ? (
-                <More label={`Show all ${roles.length} roles`}>{rolesTable}</More>
+                <More label={capped ? `Show the top ${roles.length} roles` : `Show all ${roles.length} roles`}>
+                  {rolesTable}
+                </More>
               ) : (
                 rolesTable
               )}
-              <p className="hint">Pick a role to see which companies are hiring and what each one offers.</p>
+              <p className="hint">
+                {capped ? `These are the ${roles.length} roles with the most postings in this sector. ` : ""}
+                Pick a role to see which companies are hiring and what each one offers.
+              </p>
             </div>
           </div>
         </div>
