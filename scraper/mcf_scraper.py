@@ -392,15 +392,17 @@ class JobSink:
         self.rows = {}
 
 
-def fetch_details(db, today, args):
+def fetch_details(db, today, args, every=None):
     """Store the years of experience asked for, and the vacancy count, of up to --details
-    live jobs that have not been looked up, newest first. With fewer lookups than new
-    postings a day this covers a sample of each day's postings, not all of them.
-    Returns (jobs stored, False if MCF kept failing and the pass gave up)."""
+    live jobs that have not been looked up, newest first (only --details-sectors, if
+    given). With fewer lookups than new postings a day this covers a sample of each
+    day's postings, not all of them. every(), if given, is called after each 1,000
+    jobs stored. Returns (jobs stored, False if MCF kept failing and the pass gave up)."""
+    only = f"&sector_slug=in.({args.details_sectors})" if args.details_sectors else ""
     ids = []
     while len(ids) < args.details:
         want = min(PAGE, args.details - len(ids))
-        rows = db.call("GET", f"/jobs?select=id&min_experience=is.null&last_seen=eq.{today}"
+        rows = db.call("GET", f"/jobs?select=id&min_experience=is.null&last_seen=eq.{today}{only}"
                               f"&order=posted_date.desc,id.asc&limit={want}&offset={len(ids)}")[0]
         ids += [r["id"] for r in rows or []]
         if len(rows or []) < want:
@@ -436,10 +438,57 @@ def fetch_details(db, today, args):
             found += 1
         if len(pending) >= 100:
             save()
+            if every and found % 1000 < 100 and found >= 1000:
+                every()
     save()
     print(f"Details stored for {found} jobs ({gone} no longer listed, {failed} failed, "
           f"{len(ids) - found - gone - failed} not stated or not reached)")
     return found, streak < 10
+
+
+def run_details_only(db, args):
+    """--details-only: the details pass for the jobs of the latest crawl, without crawling.
+    Returns the process exit code."""
+    problems = []
+    try:
+        latest = db.call("GET", "/jobs?select=last_seen&order=last_seen.desc&limit=1")[0]
+        if not latest:
+            print("No jobs in the database yet", file=sys.stderr)
+            return 1
+        day = latest[0]["last_seen"]
+        # Refresh only when the stats already show that crawl in full. Then a refresh
+        # changes the experience figures and nothing else; after a partial crawl it
+        # would shrink the site, so it is left to the next whole crawl.
+        meta = db.call("GET", "/stats_meta?select=last_scrape,postings")[0] or [{}]
+        current = (meta[0].get("last_scrape") == day
+                   and meta[0].get("postings") == db.count("jobs", f"last_seen=eq.{day}"))
+    except SupabaseError as e:
+        print(f"Cannot read the latest crawl: {e}", file=sys.stderr)
+        return 1
+
+    def refresh():
+        try:
+            db.rpc("refresh_stats", timeout=900, retries=1)
+            print("Stats refreshed", flush=True)
+        except SupabaseError as e:
+            problems.append(f"Stats refresh failed: {e}")
+
+    print(f"Details for the crawl of {day}"
+          + (f", sectors {args.details_sectors}" if args.details_sectors else ""))
+    try:
+        found, ok = fetch_details(db, day, args, every=refresh if current else None)
+        if not ok:
+            problems.append("The details lookups stopped early.")
+    except SupabaseError as e:
+        found = 0
+        problems.append(f"Database write failed during the details pass: {e}")
+    if current and found:
+        refresh()
+    elif not current:
+        print("Stats not refreshed: they do not show the latest crawl in full")
+    for p in problems:
+        print(p, file=sys.stderr)
+    return 1 if problems else 0
 
 
 def run_supabase(args, targets):
@@ -459,6 +508,8 @@ def run_supabase(args, targets):
         print(f"Cannot read the jobs table: {e}\nIs db/schema.sql applied, and is the key "
               "the service role key?", file=sys.stderr)
         return 2
+    if args.details_only:
+        return run_details_only(db, args)
     try:
         for cat in targets:
             label = cat or "all (newest first)"
@@ -602,6 +653,10 @@ def main():
     ap.add_argument("--details", type=int, default=0, metavar="N",
                     help="with --supabase: look up years of experience and vacancies for up to N "
                          "live jobs that lack them")
+    ap.add_argument("--details-sectors", metavar="SLUGS",
+                    help="with --details: only jobs in these sectors, e.g. engineering,information-technology")
+    ap.add_argument("--details-only", action="store_true",
+                    help="with --details: skip the crawl and look up jobs from the latest crawl")
     ap.add_argument("--prune-raw", type=int, default=0, metavar="DAYS",
                     help="with --supabase: clear the raw column of jobs delisted for over DAYS "
                          "days, to save database space (default: keep everything)")
@@ -610,6 +665,12 @@ def main():
         ap.error(f"--limit must be between 1 and {MAX_LIMIT}")
     if (args.details or args.prune_raw) and not args.supabase:
         ap.error("--details and --prune-raw only work with --supabase")
+    if (args.details_sectors or args.details_only) and not args.details:
+        ap.error("--details-sectors and --details-only need --details N")
+    if args.details_only and (args.all or args.category or args.prune_raw):
+        ap.error("--details-only does not crawl; leave out --all, --category and --prune-raw")
+    if args.details_sectors and not re.fullmatch(r"[a-z0-9-]+(,[a-z0-9-]+)*", args.details_sectors):
+        ap.error("--details-sectors takes sector slugs joined by commas, e.g. engineering,f-b")
     if args.details < 0 or args.prune_raw < 0:
         ap.error("--details and --prune-raw cannot be negative")
     if args.max_pages is None:

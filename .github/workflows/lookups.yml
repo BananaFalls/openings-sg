@@ -1,0 +1,56 @@
+name: Experience lookups
+
+# Run by hand (Actions > Experience lookups > Run workflow). Looks up the years of
+# experience asked for on the postings of the latest crawl, for chosen sectors,
+# without crawling again. One lookup process per sector, side by side, each at
+# the usual pace of about 23 a minute. The stats are refreshed after every 1,000
+# jobs stored, so the site fills in as it goes.
+#
+# Uses the same secrets as the daily scrape.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sectors:
+        description: "Sector slugs, comma separated"
+        default: "engineering,information-technology"
+      per_sector:
+        description: "Most lookups per sector (about 23 a minute; 6,500 is about 4.7 hours)"
+        default: "6500"
+
+permissions:
+  contents: read
+
+# Shares the daily scrape's group, so the two never run at the same time.
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  lookups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Look up years of experience
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PYTHONUNBUFFERED: "1"
+          SECTORS: ${{ inputs.sectors }}
+          PER_SECTOR: ${{ inputs.per_sector }}
+        run: |
+          set -u
+          pids=()
+          for s in $(echo "$SECTORS" | tr ',' ' '); do
+            ( set -o pipefail
+              python scraper/mcf_scraper.py --supabase --details-only \
+                --details "$PER_SECTOR" --details-sectors "$s" 2>&1 | sed -u "s/^/[$s] /" ) &
+            pids+=($!)
+          done
+          fail=0
+          for p in "${pids[@]}"; do wait "$p" || fail=1; done
+          exit $fail
