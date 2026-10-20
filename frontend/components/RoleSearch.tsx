@@ -4,13 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { int, kfmt } from "@/lib/format";
+import { MIN_CHARS, enterTarget, normaliseQuery, visibleState, type SearchState } from "@/lib/search";
 import type { RoleHit } from "@/app/api/roles/route";
 
-type State =
-  | { kind: "idle" }
-  | { kind: "loading" }
-  | { kind: "done"; q: string; total: number; roles: RoleHit[] }
-  | { kind: "error" };
+type State = SearchState<RoleHit>;
 
 /** "Type your job title" box for the home page. Results link straight to the role pages. */
 export function RoleSearch() {
@@ -18,10 +15,10 @@ export function RoleSearch() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
-  const q = query.replace(/\s+/g, " ").trim();
+  const q = normaliseQuery(query);
 
   useEffect(() => {
-    if (q.length < 2) return;
+    if (q.length < MIN_CHARS) return;
     const ctl = new AbortController();
     // wait for a pause in typing, so each keystroke isn't a request
     const timer = setTimeout(async () => {
@@ -42,8 +39,9 @@ export function RoleSearch() {
     };
   }, [q]);
 
-  const shown = q.length >= 2 ? state : ({ kind: "idle" } as State);
-  const first = shown.kind === "done" ? shown.roles[0] : undefined;
+  // results always belong to the text now in the box: an earlier query's rows are never shown or opened
+  const shown = visibleState(state, q);
+  const target = enterTarget(state, q);
 
   return (
     <form
@@ -52,7 +50,7 @@ export function RoleSearch() {
       action="/sectors"
       onSubmit={(e) => {
         e.preventDefault();
-        if (first) router.push(`/roles/${first.slug}`);
+        if (target) router.push(`/roles/${target}`);
       }}
     >
       <label htmlFor={id}>What job are you looking for?</label>
