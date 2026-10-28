@@ -527,7 +527,7 @@ def run_details_only(db, args):
         # database answers "lock timeout" (55P03). Wait for it rather than fail.
         for attempt in range(4):
             try:
-                db.rpc("refresh_stats", timeout=900, retries=1)
+                db.rpc("trigger_refresh_stats_async", timeout=900, retries=1)
                 print("Stats refreshed", flush=True)
                 return
             except SupabaseError as e:
